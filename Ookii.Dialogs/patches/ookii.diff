@@ -1,0 +1,920 @@
+Index: Ookii.Dialogs.Wpf/ComCtlv6ActivationContext.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/ComCtlv6ActivationContext.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/ComCtlv6ActivationContext.cs	(revision 32323)
+@@ -1,10 +1,5 @@
+ ﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Security.Permissions;
+-using System.Security;
+-using System.IO;
++using Alphaleonis.Win32.Filesystem;
+ using System.Runtime.InteropServices;
+ 
+ namespace Ookii.Dialogs.Wpf
+Index: Ookii.Dialogs.Wpf/VistaSaveFileDialog.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/VistaSaveFileDialog.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/VistaSaveFileDialog.cs	(revision 32323)
+@@ -1,13 +1,13 @@
+ // Copyright (c) Sven Groot (Ookii.org) 2009
+ // See license.txt for details
+-using System;
+-using System.Collections.Generic;
+-using System.Text;
++
+ using System.IO;
+ using System.ComponentModel;
+ using Microsoft.Win32;
+ using Ookii.Dialogs.Wpf.Interop;
+ using System.Windows;
++using File = Alphaleonis.Win32.Filesystem.File;
++using Path = Alphaleonis.Win32.Filesystem.Path;
+ 
+ namespace Ookii.Dialogs.Wpf
+ {
+@@ -132,7 +132,7 @@
+             else
+             {
+                 string fileName = FileName;
+-                return new FileStream(fileName, FileMode.Create, FileAccess.ReadWrite);
++                return File.Open(fileName, FileMode.Create, FileAccess.ReadWrite);
+             }
+         }
+ 
+Index: Ookii.Dialogs.Wpf/VistaOpenFileDialog.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/VistaOpenFileDialog.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/VistaOpenFileDialog.cs	(revision 32323)
+@@ -1,8 +1,5 @@
+ // Copyright (c) Sven Groot (Ookii.org) 2006
+ // See license.txt for details
+-using System;
+-using System.Collections.Generic;
+-using System.Text;
+ using System.IO;
+ using System.ComponentModel;
+ using Microsoft.Win32;
+@@ -177,7 +174,7 @@
+             else
+             {
+                 string fileName = FileName;
+-                return new FileStream(fileName, FileMode.Open, FileAccess.Read);
++                return File.Open(fileName, FileMode.Open, FileAccess.Read);
+             }
+         }
+ 
+Index: Ookii.Dialogs.Wpf/Interop/IProgressDialog.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/Interop/IProgressDialog.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/Interop/IProgressDialog.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ using System.Runtime.InteropServices;
+ 
+Index: Ookii.Dialogs.Wpf/Interop/COMGuids.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/Interop/COMGuids.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/Interop/COMGuids.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ using System.Runtime.InteropServices;
+ 
+Index: Ookii.Dialogs.Wpf/Ookii.Dialogs.Wpf.csproj
+===================================================================
+--- Ookii.Dialogs.Wpf/Ookii.Dialogs.Wpf.csproj	(revision 13347)
++++ Ookii.Dialogs.Wpf/Ookii.Dialogs.Wpf.csproj	(revision 32323)
+@@ -33,7 +33,8 @@
+     <IsWebBootstrapper>false</IsWebBootstrapper>
+     <UseApplicationTrust>false</UseApplicationTrust>
+     <BootstrapperEnabled>true</BootstrapperEnabled>
+-    <TargetFrameworkProfile />
++    <TargetFrameworkProfile>
++    </TargetFrameworkProfile>
+   </PropertyGroup>
+   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+     <DebugSymbols>true</DebugSymbols>
+@@ -58,6 +59,9 @@
+     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+   </PropertyGroup>
+   <ItemGroup>
++    <Reference Include="AlphaFS2">
++      <HintPath>..\..\..\..\Applications\production\MPManager3\References_Release\AlphaFS2.dll</HintPath>
++    </Reference>
+     <Reference Include="PresentationCore">
+       <RequiredTargetFramework>3.0</RequiredTargetFramework>
+     </Reference>
+@@ -72,14 +76,6 @@
+     <Reference Include="System.Drawing" />
+     <Reference Include="System.Security" />
+     <Reference Include="System.Xaml" />
+-    <Reference Include="System.Xml.Linq">
+-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+-    </Reference>
+-    <Reference Include="System.Data.DataSetExtensions">
+-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+-    </Reference>
+-    <Reference Include="System.Data" />
+-    <Reference Include="System.Xml" />
+     <Reference Include="WindowsBase">
+       <RequiredTargetFramework>3.0</RequiredTargetFramework>
+     </Reference>
+Index: Ookii.Dialogs.Wpf/AnimationResource.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/AnimationResource.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/AnimationResource.cs	(revision 32323)
+@@ -1,7 +1,4 @@
+ ﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+ using System.IO;
+ 
+ namespace Ookii.Dialogs.Wpf
+Index: Ookii.Dialogs.Wpf/VistaFileDialog.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/VistaFileDialog.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/VistaFileDialog.cs	(revision 32323)
+@@ -1,11 +1,9 @@
+ // Copyright (c) Sven Groot (Ookii.org) 2006
+ // See license.txt for details
+ using System;
+-using System.Collections.Generic;
+-using System.Text;
++using System.Globalization;
+ using Microsoft.Win32;
+-using System.Collections;
+-using System.IO;
++using Alphaleonis.Win32.Filesystem;
+ using System.ComponentModel;
+ using Ookii.Dialogs.Wpf.Interop;
+ using System.Windows;
+@@ -42,7 +40,7 @@
+         private FileDialog _downlevelDialog;
+         private NativeMethods.FOS _options;
+         private string _filter;
+-        private int _filterIndex ;
++        private int _filterIndex;
+         private string[] _fileNames;
+         private string _defaultExt;
+         private bool _addExtension;
+@@ -103,13 +101,13 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.AddExtension;
+                 return _addExtension;
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.AddExtension = value;
+                 else
+                     _addExtension = value;
+@@ -128,13 +126,13 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.CheckFileExists;
+                 return GetOption(NativeMethods.FOS.FOS_FILEMUSTEXIST);
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.CheckFileExists = value;
+                 else
+                     SetOption(NativeMethods.FOS.FOS_FILEMUSTEXIST, value);
+@@ -153,19 +151,19 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.CheckPathExists;
+                 return GetOption(NativeMethods.FOS.FOS_PATHMUSTEXIST);
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.CheckPathExists = value;
+                 else
+                     SetOption(NativeMethods.FOS.FOS_PATHMUSTEXIST, value);
+             }
+         }
+-	
++
+         /// <summary>
+         /// Gets or sets the default file name extension.
+         /// </summary>
+@@ -177,21 +175,21 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.DefaultExt;
+                 return _defaultExt ?? string.Empty;
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.DefaultExt = value;
+                 else
+                 {
+-                    if( value != null )
++                    if (value != null)
+                     {
+-                        if( value.StartsWith(".", StringComparison.CurrentCulture) )
++                        if (value.StartsWith(".", StringComparison.CurrentCulture))
+                             value = value.Substring(1);
+-                        else if( value.Length == 0 )
++                        else if (value.Length == 0)
+                             value = null;
+                     }
+ 
+@@ -213,20 +211,20 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.DereferenceLinks;
+                 return !GetOption(NativeMethods.FOS.FOS_NODEREFERENCELINKS);
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.DereferenceLinks = value;
+                 else
+                     SetOption(NativeMethods.FOS.FOS_NODEREFERENCELINKS, !value);
+             }
+         }
+-	
+ 
++
+         /// <summary>
+         /// Gets or sets a string containing the file name selected in the file dialog box.
+         /// </summary>
+@@ -238,10 +236,10 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.FileName;
+ 
+-                if( _fileNames == null || _fileNames.Length == 0 || string.IsNullOrEmpty(_fileNames[0]) )
++                if (_fileNames == null || _fileNames.Length == 0 || string.IsNullOrEmpty(_fileNames[0]))
+                     return string.Empty;
+                 else
+                     return _fileNames[0];
+@@ -248,8 +246,11 @@
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
+-                    DownlevelDialog.FileName = value;
++                if (DownlevelDialog != null)
++                {
++                    if (!value.EndsWith(Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture)))
++                        DownlevelDialog.FileName = value;
++                }
+                 _fileNames = new string[1];
+                 _fileNames[0] = value;
+             }
+@@ -267,7 +268,7 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.FileNames;
+                 return FileNamesInternal;
+             }
+@@ -286,22 +287,22 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.Filter;
+                 return _filter;
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.Filter = value;
+                 else
+                 {
+-                    if( value != _filter )
++                    if (value != _filter)
+                     {
+-                        if( !string.IsNullOrEmpty(value) )
++                        if (!string.IsNullOrEmpty(value))
+                         {
+                             string[] filterElements = value.Split(new char[] { '|' });
+-                            if( filterElements == null || filterElements.Length % 2 != 0 )
++                            if (filterElements == null || filterElements.Length % 2 != 0)
+                                 throw new ArgumentException(Properties.Resources.InvalidFilterString);
+ 
+                         }
+@@ -324,13 +325,13 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.FilterIndex;
+                 return _filterIndex;
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.FilterIndex = value;
+                 else
+                     _filterIndex = value;
+@@ -348,10 +349,10 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.InitialDirectory;
+ 
+-                if( _initialDirectory != null )
++                if (_initialDirectory != null)
+                     return _initialDirectory;
+                 else
+                     return string.Empty;
+@@ -358,7 +359,7 @@
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.InitialDirectory = value;
+                 else
+                     _initialDirectory = value;
+@@ -377,13 +378,13 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.RestoreDirectory;
+                 return GetOption(NativeMethods.FOS.FOS_NOCHANGEDIR);
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.RestoreDirectory = value;
+                 else
+                     SetOption(NativeMethods.FOS.FOS_NOCHANGEDIR, value);
+@@ -401,9 +402,9 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.Title;
+-                if( _title != null )
++                if (_title != null)
+                     return _title;
+                 else
+                     return string.Empty;
+@@ -410,14 +411,14 @@
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.Title = value;
+                 else
+                     _title = value;
+             }
+         }
+-	
+ 
++
+         /// <summary>
+         /// Gets or sets a value indicating whether the dialog box accepts only valid Win32 file names.
+         /// </summary>
+@@ -429,20 +430,20 @@
+         {
+             get
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     return DownlevelDialog.ValidateNames;
+                 return !GetOption(NativeMethods.FOS.FOS_NOVALIDATE);
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
++                if (DownlevelDialog != null)
+                     DownlevelDialog.ValidateNames = value;
+                 else
+                     SetOption(NativeMethods.FOS.FOS_NOVALIDATE, !value);
+             }
+         }
+-	
+ 
++
+         #endregion
+ 
+         #region Protected Properties
+@@ -468,7 +469,7 @@
+             set
+             {
+                 _downlevelDialog = value;
+-                if( value != null )
++                if (value != null)
+                 {
+                     //value.HelpRequest += new EventHandler(DownlevelDialog_HelpRequest);
+                     value.FileOk += new System.ComponentModel.CancelEventHandler(DownlevelDialog_FileOk);
+@@ -484,7 +485,7 @@
+         {
+             private get
+             {
+-                if( _fileNames == null )
++                if (_fileNames == null)
+                 {
+                     return new string[0];
+                 }
+@@ -505,7 +506,7 @@
+         /// </summary>
+         public virtual void Reset()
+         {
+-            if( DownlevelDialog != null )
++            if (DownlevelDialog != null)
+                 DownlevelDialog.Reset();
+             else
+             {
+@@ -537,7 +538,7 @@
+         public bool? ShowDialog(Window owner)
+         {
+             _owner = owner;
+-            if( DownlevelDialog != null )
++            if (DownlevelDialog != null)
+                 return DownlevelDialog.ShowDialog(owner);
+             else
+             {
+@@ -552,7 +553,7 @@
+ 
+         internal void SetOption(NativeMethods.FOS option, bool value)
+         {
+-            if( value )
++            if (value)
+                 _options |= option;
+             else
+                 _options &= ~option;
+@@ -565,7 +566,7 @@
+ 
+         internal virtual void GetResult(Ookii.Dialogs.Wpf.Interop.IFileDialog dialog)
+         {
+-            if( !GetOption(NativeMethods.FOS.FOS_ALLOWMULTISELECT) )
++            if (!GetOption(NativeMethods.FOS.FOS_ALLOWMULTISELECT))
+             {
+                 _fileNames = new string[1];
+                 Ookii.Dialogs.Wpf.Interop.IShellItem result;
+@@ -581,7 +582,7 @@
+         protected virtual void OnFileOk(System.ComponentModel.CancelEventArgs e)
+         {
+             System.ComponentModel.CancelEventHandler handler = FileOk;
+-            if( handler != null )
++            if (handler != null)
+                 handler(this, e);
+         }
+ 
+@@ -591,15 +592,15 @@
+ 
+         internal bool PromptUser(string text, MessageBoxButton buttons, MessageBoxImage icon, MessageBoxResult defaultResult)
+         {
+-            string caption = string.IsNullOrEmpty(_title) ? 
+-                (this is VistaOpenFileDialog ? ComDlgResources.LoadString(ComDlgResources.ComDlgResourceId.Open) : ComDlgResources.LoadString(ComDlgResources.ComDlgResourceId.ConfirmSaveAs)) : 
++            string caption = string.IsNullOrEmpty(_title) ?
++                (this is VistaOpenFileDialog ? ComDlgResources.LoadString(ComDlgResources.ComDlgResourceId.Open) : ComDlgResources.LoadString(ComDlgResources.ComDlgResourceId.ConfirmSaveAs)) :
+                 _title;
+             MessageBoxOptions options = 0;
+-            if( System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft )
++            if (System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft)
+                 options |= MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading;
+             return MessageBox.Show(_owner, text, caption, buttons, icon, defaultResult, options) == MessageBoxResult.Yes;
+         }
+-        
++
+         internal virtual void SetDialogProperties(Ookii.Dialogs.Wpf.Interop.IFileDialog dialog)
+         {
+             uint cookie;
+@@ -606,10 +607,10 @@
+             dialog.Advise(new VistaFileDialogEvents(this), out cookie);
+ 
+             // Set the default file name
+-            if( !(_fileNames == null || _fileNames.Length == 0 || string.IsNullOrEmpty(_fileNames[0])) )
++            if (!(_fileNames == null || _fileNames.Length == 0 || string.IsNullOrEmpty(_fileNames[0])))
+             {
+                 string parent = Path.GetDirectoryName(_fileNames[0]);
+-                if( parent == null || !Directory.Exists(parent) )
++                if (parent == null || !Directory.Exists(parent))
+                 {
+                     dialog.SetFileName(_fileNames[0]);
+                 }
+@@ -622,11 +623,11 @@
+             }
+ 
+             // Set the filter
+-            if( !string.IsNullOrEmpty(_filter) )
++            if (!string.IsNullOrEmpty(_filter))
+             {
+                 string[] filterElements = _filter.Split(new char[] { '|' });
+                 NativeMethods.COMDLG_FILTERSPEC[] filter = new NativeMethods.COMDLG_FILTERSPEC[filterElements.Length / 2];
+-                for( int x = 0; x < filterElements.Length; x += 2 )
++                for (int x = 0; x < filterElements.Length; x += 2)
+                 {
+                     filter[x / 2].pszName = filterElements[x];
+                     filter[x / 2].pszSpec = filterElements[x + 1];
+@@ -633,24 +634,27 @@
+                 }
+                 dialog.SetFileTypes((uint)filter.Length, filter);
+ 
+-                if( _filterIndex > 0 && _filterIndex <= filter.Length )
++                if (_filterIndex > 0 && _filterIndex <= filter.Length)
+                     dialog.SetFileTypeIndex((uint)_filterIndex);
+             }
+ 
+             // Default extension
+-            if( _addExtension && !string.IsNullOrEmpty(_defaultExt) )
++            if (_addExtension && !string.IsNullOrEmpty(_defaultExt))
+             {
+                 dialog.SetDefaultExtension(_defaultExt);
+             }
+ 
+-            // Initial directory
+-            if( !string.IsNullOrEmpty(_initialDirectory) )
++            // Initial directory 
++            if (!string.IsNullOrEmpty(_initialDirectory))
+             {
+-                Ookii.Dialogs.Wpf.Interop.IShellItem item = NativeMethods.CreateItemFromParsingName(_initialDirectory);
+-                dialog.SetDefaultFolder(item);
++                //AM: si le fichier n'existe pas je vais dans Mesdocuments
++                if (!Directory.Exists(_initialDirectory))
++                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
++                IShellItem item = NativeMethods.CreateItemFromParsingName(_initialDirectory);
++                dialog.SetFolder(item);
+             }
+ 
+-            if( !string.IsNullOrEmpty(_title) )
++            if (!string.IsNullOrEmpty(_title))
+             {
+                 dialog.SetTitle(_title);
+             }
+@@ -681,9 +685,9 @@
+                 dialog = CreateFileDialog();
+                 SetDialogProperties(dialog);
+                 int result = dialog.Show(hwndOwner);
+-                if( result < 0 )
++                if (result < 0)
+                 {
+-                    if( (uint)result == (uint)HRESULT.ERROR_CANCELLED )
++                    if ((uint)result == (uint)HRESULT.ERROR_CANCELLED)
+                         return false;
+                     else
+                         throw System.Runtime.InteropServices.Marshal.GetExceptionForHR(result);
+@@ -692,7 +696,7 @@
+             }
+             finally
+             {
+-                if( dialog != null )
++                if (dialog != null)
+                     System.Runtime.InteropServices.Marshal.FinalReleaseComObject(dialog);
+             }
+         }
+@@ -704,4 +708,4 @@
+ 
+         #endregion
+     }
+-}
++}
+\ No newline at end of file
+Index: Ookii.Dialogs.Wpf/VistaFolderBrowserDialog.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/VistaFolderBrowserDialog.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/VistaFolderBrowserDialog.cs	(revision 32323)
+@@ -1,10 +1,9 @@
+ // Copyright � Sven Groot (Ookii.org) 2009
+ // BSD license; see license.txt for details.
+ using System;
+-using System.Collections.Generic;
+ using System.Text;
+ using System.ComponentModel;
+-using System.IO;
++using Alphaleonis.Win32.Filesystem;
+ using Ookii.Dialogs.Wpf.Interop;
+ using System.Windows.Interop;
+ using System.Windows;
+Index: Ookii.Dialogs.Wpf/ShellAnimation.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/ShellAnimation.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/ShellAnimation.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ 
+ namespace Ookii.Dialogs.Wpf
+Index: Ookii.Dialogs.Wpf/DownlevelTextMode.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/DownlevelTextMode.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/DownlevelTextMode.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ 
+ namespace Ookii.Dialogs.Wpf
+Index: Ookii.Dialogs.Wpf/NativeMethods.cs
+===================================================================
+--- Ookii.Dialogs.Wpf/NativeMethods.cs	(revision 13347)
++++ Ookii.Dialogs.Wpf/NativeMethods.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ using System.Runtime.InteropServices;
+ using System.Runtime.ConstrainedExecution;
+Index: Ookii.Dialogs.sln
+===================================================================
+--- Ookii.Dialogs.sln	(revision 13347)
++++ Ookii.Dialogs.sln	(revision 32323)
+@@ -10,6 +10,10 @@
+ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ookii.Dialogs.Wpf", "Ookii.Dialogs.Wpf\Ookii.Dialogs.Wpf.csproj", "{D01B1D20-8F5B-4834-8E5C-C7EC6DD587D4}"
+ EndProject
+ Global
++	GlobalSection(SubversionScc) = preSolution
++		Svn-Managed = True
++		Manager = AnkhSVN - Subversion Support for Visual Studio
++	EndGlobalSection
+ 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+ 		Debug|Any CPU = Debug|Any CPU
+ 		Release|Any CPU = Release|Any CPU
+Index: Ookii.Dialogs/ComCtlv6ActivationContext.cs
+===================================================================
+--- Ookii.Dialogs/ComCtlv6ActivationContext.cs	(revision 13347)
++++ Ookii.Dialogs/ComCtlv6ActivationContext.cs	(revision 32323)
+@@ -1,11 +1,6 @@
+ ﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Security.Permissions;
+-using System.Security;
+-using System.IO;
+ using System.Runtime.InteropServices;
++using Alphaleonis.Win32.Filesystem;
+ 
+ namespace Ookii.Dialogs
+ {
+Index: Ookii.Dialogs/VistaSaveFileDialog.cs
+===================================================================
+--- Ookii.Dialogs/VistaSaveFileDialog.cs	(revision 13347)
++++ Ookii.Dialogs/VistaSaveFileDialog.cs	(revision 32323)
+@@ -1,12 +1,12 @@
+ // Copyright (c) Sven Groot (Ookii.org) 2006
+ // See license.txt for details
+ using System;
+-using System.Collections.Generic;
+-using System.Text;
++using System.IO;
+ using System.Windows.Forms;
+-using System.IO;
+ using System.ComponentModel;
+ using Ookii.Dialogs.Interop;
++using File = Alphaleonis.Win32.Filesystem.File;
++using Path = Alphaleonis.Win32.Filesystem.Path;
+ 
+ namespace Ookii.Dialogs
+ {
+@@ -133,7 +133,7 @@
+                 string fileName = FileName;
+                 if( string.IsNullOrEmpty(fileName) )
+                     throw new ArgumentNullException("FileName");
+-                return new FileStream(fileName, FileMode.Create, FileAccess.ReadWrite);
++                return File.Open(fileName, FileMode.Create, FileAccess.ReadWrite);
+             }
+         }
+ 
+Index: Ookii.Dialogs/VistaOpenFileDialog.cs
+===================================================================
+--- Ookii.Dialogs/VistaOpenFileDialog.cs	(revision 13347)
++++ Ookii.Dialogs/VistaOpenFileDialog.cs	(revision 32323)
+@@ -1,8 +1,6 @@
+ // Copyright (c) Sven Groot (Ookii.org) 2006
+ // See license.txt for details
+ using System;
+-using System.Collections.Generic;
+-using System.Text;
+ using System.Windows.Forms;
+ using System.IO;
+ using System.ComponentModel;
+@@ -183,7 +181,7 @@
+                 string fileName = FileName;
+                 if( string.IsNullOrEmpty(fileName) )
+                     throw new ArgumentNullException("FileName");
+-                return new FileStream(fileName, FileMode.Open, FileAccess.Read);
++                return File.Open(fileName, FileMode.Open, FileAccess.Read);
+             }
+         }
+ 
+Index: Ookii.Dialogs/Interop/IProgressDialog.cs
+===================================================================
+--- Ookii.Dialogs/Interop/IProgressDialog.cs	(revision 13347)
++++ Ookii.Dialogs/Interop/IProgressDialog.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ using System.Runtime.InteropServices;
+ 
+Index: Ookii.Dialogs/Interop/COMGuids.cs
+===================================================================
+--- Ookii.Dialogs/Interop/COMGuids.cs	(revision 13347)
++++ Ookii.Dialogs/Interop/COMGuids.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ using System.Runtime.InteropServices;
+ 
+Index: Ookii.Dialogs/Ookii.Dialogs.csproj
+===================================================================
+--- Ookii.Dialogs/Ookii.Dialogs.csproj	(revision 13347)
++++ Ookii.Dialogs/Ookii.Dialogs.csproj	(revision 32323)
+@@ -33,7 +33,8 @@
+     <IsWebBootstrapper>false</IsWebBootstrapper>
+     <UseApplicationTrust>false</UseApplicationTrust>
+     <BootstrapperEnabled>true</BootstrapperEnabled>
+-    <TargetFrameworkProfile />
++    <TargetFrameworkProfile>
++    </TargetFrameworkProfile>
+   </PropertyGroup>
+   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+     <DebugSymbols>true</DebugSymbols>
+@@ -56,8 +57,12 @@
+     <DocumentationFile>bin\Release\Ookii.Dialogs.XML</DocumentationFile>
+     <RunCodeAnalysis>true</RunCodeAnalysis>
+     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
++    <PlatformTarget>AnyCPU</PlatformTarget>
+   </PropertyGroup>
+   <ItemGroup>
++    <Reference Include="AlphaFS2">
++      <HintPath>..\..\..\..\Applications\production\MPManager3\References_Release\AlphaFS2.dll</HintPath>
++    </Reference>
+     <Reference Include="System" />
+     <Reference Include="System.Core">
+       <RequiredTargetFramework>3.5</RequiredTargetFramework>
+@@ -66,14 +71,6 @@
+     <Reference Include="System.Drawing" />
+     <Reference Include="System.Security" />
+     <Reference Include="System.Windows.Forms" />
+-    <Reference Include="System.Xml.Linq">
+-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+-    </Reference>
+-    <Reference Include="System.Data.DataSetExtensions">
+-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+-    </Reference>
+-    <Reference Include="System.Data" />
+-    <Reference Include="System.Xml" />
+   </ItemGroup>
+   <ItemGroup>
+     <Compile Include="AdditionalVisualStyleElements.cs" />
+Index: Ookii.Dialogs/AnimationResource.cs
+===================================================================
+--- Ookii.Dialogs/AnimationResource.cs	(revision 13347)
++++ Ookii.Dialogs/AnimationResource.cs	(revision 32323)
+@@ -1,9 +1,7 @@
+ ﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+ using System.IO;
+ 
++
+ namespace Ookii.Dialogs
+ {
+     /// <summary>
+Index: Ookii.Dialogs/VistaFileDialog.cs
+===================================================================
+--- Ookii.Dialogs/VistaFileDialog.cs	(revision 13347)
++++ Ookii.Dialogs/VistaFileDialog.cs	(revision 32323)
+@@ -1,11 +1,9 @@
+ // Copyright (c) Sven Groot (Ookii.org) 2006
+ // See license.txt for details
+ using System;
+-using System.Collections.Generic;
+-using System.Text;
++using System.Globalization;
+ using System.Windows.Forms;
+-using System.Collections;
+-using System.IO;
++using Alphaleonis.Win32.Filesystem;
+ using System.ComponentModel;
+ using Ookii.Dialogs.Interop;
+ 
+@@ -245,8 +243,11 @@
+             }
+             set
+             {
+-                if( DownlevelDialog != null )
+-                    DownlevelDialog.FileName = value;
++                if (DownlevelDialog != null)
++                {
++                    if (!value.EndsWith(Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture)))
++                        DownlevelDialog.FileName = value;
++                }
+                 _fileNames = new string[1];
+                 _fileNames[0] = value;
+             }
+@@ -693,7 +694,7 @@
+             }
+ 
+             // Initial directory
+-            if( !string.IsNullOrEmpty(_initialDirectory) )
++            if (!string.IsNullOrEmpty(_initialDirectory) && Directory.Exists(_initialDirectory))
+             {
+                 Interop.IShellItem item = NativeMethods.CreateItemFromParsingName(_initialDirectory);
+                 dialog.SetDefaultFolder(item);
+Index: Ookii.Dialogs/VistaFolderBrowserDialog.cs
+===================================================================
+--- Ookii.Dialogs/VistaFolderBrowserDialog.cs	(revision 13347)
++++ Ookii.Dialogs/VistaFolderBrowserDialog.cs	(revision 32323)
+@@ -1,11 +1,9 @@
+ // Copyright � Sven Groot (Ookii.org) 2009
+ // BSD license; see license.txt for details.
+ using System;
+-using System.Collections.Generic;
+-using System.Text;
+ using System.Windows.Forms;
+ using System.ComponentModel;
+-using System.IO;
++using Alphaleonis.Win32.Filesystem;
+ using Ookii.Dialogs.Interop;
+ 
+ namespace Ookii.Dialogs
+Index: Ookii.Dialogs/ShellAnimation.cs
+===================================================================
+--- Ookii.Dialogs/ShellAnimation.cs	(revision 13347)
++++ Ookii.Dialogs/ShellAnimation.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ 
+ namespace Ookii.Dialogs
+Index: Ookii.Dialogs/DownlevelTextMode.cs
+===================================================================
+--- Ookii.Dialogs/DownlevelTextMode.cs	(revision 13347)
++++ Ookii.Dialogs/DownlevelTextMode.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ 
+ namespace Ookii.Dialogs
+Index: Ookii.Dialogs/NativeMethods.cs
+===================================================================
+--- Ookii.Dialogs/NativeMethods.cs	(revision 13347)
++++ Ookii.Dialogs/NativeMethods.cs	(revision 32323)
+@@ -1,6 +1,5 @@
+ ﻿using System;
+ using System.Collections.Generic;
+-using System.Linq;
+ using System.Text;
+ using System.Runtime.InteropServices;
+ using System.Runtime.ConstrainedExecution;

@@ -1,0 +1,56 @@
+--- Xceed.Wpf.AvalonDock.Themes.Expression.csproj	Thu Jun 02 19:01:33 2016
++++ Xceed.Wpf.AvalonDock.Themes.Expression.csproj	Thu Jun 02 19:01:55 2016
+@@ -1,9 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <PropertyGroup>
+-    <ReferencePath>C:\\dev\\software\\applications\\production\\mpmanager3\\references\\</ReferencePath>
+-  </PropertyGroup>
+-  <PropertyGroup>
+     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+     <ProductVersion>8.0.30703</ProductVersion>
+@@ -20,7 +17,7 @@
+     <DebugSymbols>true</DebugSymbols>
+     <DebugType>full</DebugType>
+     <Optimize>false</Optimize>
+-    <OutputPath>..\bin\</OutputPath>
++    <OutputPath>bin\Debug\</OutputPath>
+     <DefineConstants>DEBUG;TRACE</DefineConstants>
+     <ErrorReport>prompt</ErrorReport>
+     <WarningLevel>4</WarningLevel>
+@@ -28,7 +25,7 @@
+   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+     <DebugType>pdbonly</DebugType>
+     <Optimize>true</Optimize>
+-    <OutputPath>..\bin\</OutputPath>
++    <OutputPath>bin\Release\</OutputPath>
+     <DefineConstants>TRACE</DefineConstants>
+     <ErrorReport>prompt</ErrorReport>
+     <WarningLevel>4</WarningLevel>
+@@ -150,17 +147,11 @@
+     <Resource Include="Images\PinRestore_Light.png" />
+   </ItemGroup>
+   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+-  <Import Project="$(MSBuildExtensionsPath)\ExtensionPack\4.0\MSBuild.ExtensionPack.tasks" />
+-  <Target Name="AfterBuild">
+-    <ItemGroup>
+-      <OutputFiles Include="$(TargetName).dll" />
+-      <OutputFiles Include="$(TargetName).pdb" />
+-    </ItemGroup>
+-    <MSBuild.ExtensionPack.FileSystem.RoboCopy Source="$(TargetDir)\" Destination="$(TargetDir)\..\..\References" Files="@(OutputFiles)">
+-      <Output TaskParameter="ExitCode" PropertyName="Exit" />
+-      <Output TaskParameter="ReturnCode" PropertyName="Return" />
+-    </MSBuild.ExtensionPack.FileSystem.RoboCopy>
+-    <Message Text="ExitCode = $(Exit)" />
+-    <Message Text="ReturnCode = $(Return)" />
+-  </Target>
++  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
++       Other similar extension points exist, see Microsoft.Common.targets.
++  <Target Name="BeforeBuild">
++  </Target>
++  <Target Name="AfterBuild">
++  </Target>
++  -->
+ </Project>
+\ No newline at end of file

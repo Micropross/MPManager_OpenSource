@@ -1,0 +1,2587 @@
+Index: AlphaFS.sln
+===================================================================
+--- AlphaFS.sln	(revision 22362)
++++ AlphaFS.sln	(revision 22494)
+@@ -17,6 +17,10 @@
+ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlphaFS.UnitTest", "AlphaFS.UnitTest\AlphaFS.UnitTest.csproj", "{BC336637-FDD7-4D13-9B24-1A888E85A944}"
+ EndProject
+ Global
++	GlobalSection(SubversionScc) = preSolution
++		Svn-Managed = True
++		Manager = AnkhSVN - Subversion Support for Visual Studio
++	EndGlobalSection
+ 	GlobalSection(TestCaseManagementSettings) = postSolution
+ 		CategoryFile = AlphaFS.vsmdi
+ 	EndGlobalSection
+Index: AlphaFS/_Compiled DLL/Debug/AlphaFS.dll
+===================================================================
+Cannot display: file marked as a binary type.
+svn:mime-type = application/octet-stream
+Index: AlphaFS/_Compiled DLL/Debug/AlphaFS.dll
+===================================================================
+--- AlphaFS/_Compiled DLL/Debug/AlphaFS.dll	(revision 22362)
++++ AlphaFS/_Compiled DLL/Debug/AlphaFS.dll	(nonexistent)
+
+Property changes on: AlphaFS/_Compiled DLL/Debug/AlphaFS.dll
+___________________________________________________________________
+Deleted: svn:mime-type
+## -1 +0,0 ##
+-application/octet-stream
+\ No newline at end of property
+Index: AlphaFS/_Compiled DLL/Release/AlphaFS.dll
+===================================================================
+Cannot display: file marked as a binary type.
+svn:mime-type = application/octet-stream
+Index: AlphaFS/_Compiled DLL/Release/AlphaFS.dll
+===================================================================
+--- AlphaFS/_Compiled DLL/Release/AlphaFS.dll	(revision 22362)
++++ AlphaFS/_Compiled DLL/Release/AlphaFS.dll	(nonexistent)
+
+Property changes on: AlphaFS/_Compiled DLL/Release/AlphaFS.dll
+___________________________________________________________________
+Deleted: svn:mime-type
+## -1 +0,0 ##
+-application/octet-stream
+\ No newline at end of property
+Index: AlphaFS/Filesystem/Shell32.cs
+===================================================================
+--- AlphaFS/Filesystem/Shell32.cs	(revision 22362)
++++ AlphaFS/Filesystem/Shell32.cs	(revision 22494)
+@@ -94,7 +94,7 @@
+ 
+          /// <summary>Get file system object by its PIDL.</summary>
+          /// <remarks>Indicate that the given file contains the address of an ITEMIDLIST structure rather than a path name.</remarks>
+-         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Pidl", Justification = "2012-09-29: Yomodo; Stick to the original name for now.")]
++         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Pidl")]
+          Pidl = 0x8,
+ 
+          /// <summary>Indicates that the given file should not be accessed. Rather, it should act as if the given file exists and use the supplied attributes.</summary>
+@@ -494,7 +494,7 @@
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+ 
+          // Path is allowed to be null.
+-         string pathLp = (string.IsNullOrEmpty(path)) ? null : Path.PrefixLongPath(path);
++         string pathLp = (string.IsNullOrEmpty(path)) ? null : Path.GetLongPath(path);
+ 
+          // According to MSDN, may not exceed MAX_PATH.
+          StringBuilder sb = new StringBuilder(NativeMethods.MaxPath);
+@@ -601,7 +601,7 @@
+       {
+          try
+          {
+-            FileInfo fileType = SHGetFileInfo(path, FileAttributes.Normal, DefaultFileInfoAttributes);
++            FileInfo fileType = ShGetFileInfo(path, FileAttributes.Normal, DefaultFileInfoAttributes);
+             return (string.IsNullOrEmpty(fileType.TypeName)) ? null : fileType.TypeName;
+          }
+          catch
+@@ -678,7 +678,7 @@
+          // In the ANSI version of this function, the name is limited to 248 characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          return NativeMethods.PathFileExists(pathLp);
+       }
+@@ -685,7 +685,7 @@
+ 
+       #endregion // PathFileExists
+ 
+-      #region SHGetFileInfo
++      #region ShGetFileInfo
+ 
+       /// <summary>Retrieves information about an object in the file system, such as a file, folder, directory, or drive root.</summary>
+       /// <param name="path">The path to the file system object which should not exceed <see cref="NativeMethods.MaxPath"/>. Both absolute and relative paths are valid.</param>
+@@ -694,9 +694,9 @@
+       /// <remarks>LongPaths not supported.</remarks>
+       /// <exception cref="NativeError.ThrowException()"/>
+       [SecurityCritical]
+-      internal static FileInfo SHGetFileInfo(string path)
++      internal static FileInfo ShGetFileInfo(string path)
+       {
+-         return SHGetFileInfo(path, FileAttributes.Normal, DefaultFileInfoAttributes);
++         return ShGetFileInfo(path, FileAttributes.Normal, DefaultFileInfoAttributes);
+       }
+ 
+       /// <summary>Retrieves information about an object in the file system, such as a file, folder, directory, or drive root.</summary>
+@@ -707,9 +707,9 @@
+       /// <remarks>LongPaths not supported.</remarks>
+       /// <exception cref="NativeError.ThrowException()"/>
+       [SecurityCritical]
+-      internal static FileInfo SHGetFileInfo(string path, FileAttributes attributes)
++      internal static FileInfo ShGetFileInfo(string path, FileAttributes attributes)
+       {
+-         return SHGetFileInfo(path, attributes, DefaultFileInfoAttributes);
++         return ShGetFileInfo(path, attributes, DefaultFileInfoAttributes);
+       }
+ 
+       /// <summary>Retrieves information about an object in the file system, such as a file, folder, directory, or drive root.</summary>
+@@ -721,7 +721,7 @@
+       /// <remarks>LongPaths not supported.</remarks>
+       /// <exception cref="NativeError.ThrowException()"/>
+       [SecurityCritical]
+-      internal static FileInfo SHGetFileInfo(string path, FileAttributes attributes, FileInfoAttributes fileInfoAttributes)
++      internal static FileInfo ShGetFileInfo(string path, FileAttributes attributes, FileInfoAttributes fileInfoAttributes)
+       {
+          // Prevent possible crash.
+          FileInfo fileInfo = new FileInfo { DisplayName = string.Empty, TypeName = string.Empty };
+@@ -734,7 +734,7 @@
+             // However, the function fails when using LongPath notation.
+             string pathRp = Path.GetRegularPath(path);
+ 
+-            UIntPtr shGetFileInfo = NativeMethods.SHGetFileInfo(pathRp, attributes, out fileInfo, (uint)Marshal.SizeOf(fileInfo), fileInfoAttributes);
++            UIntPtr shGetFileInfo = NativeMethods.ShGetFileInfo(pathRp, attributes, out fileInfo, (uint)Marshal.SizeOf(fileInfo), fileInfoAttributes);
+ 
+             if (shGetFileInfo == UIntPtr.Zero)
+                NativeError.ThrowException();
+@@ -743,7 +743,7 @@
+          return fileInfo;
+       }
+ 
+-      #endregion // SHGetFileInfo
++      #endregion // ShGetFileInfo
+ 
+       #region UrlIs
+ 
+Index: AlphaFS/Filesystem/FileInfo.cs
+===================================================================
+--- AlphaFS/Filesystem/FileInfo.cs	(revision 22362)
++++ AlphaFS/Filesystem/FileInfo.cs	(revision 22494)
+@@ -170,7 +170,7 @@
+ 
+       /// <summary>Creates a <see crefe="StreamWriter"/> instance that writes a new text file.</summary>
+       /// <returns>A new <see cref="StreamWriter"/></returns>
+-      [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "A valid handle needs to be returned.")]
++      [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
+       [SecurityCritical]
+       public StreamWriter CreateText()
+       {
+@@ -535,7 +535,7 @@
+       /// Use the SetAccessControl method whenever you need to add or remove ACL entries from a file.
+       /// </remarks>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public bool SetAccessControl(FileSecurity fileSecurity)
+       {
+@@ -550,7 +550,7 @@
+       /// Use the SetAccessControl method whenever you need to add or remove ACL entries from a file.
+       /// </remarks>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public bool SetAccessControl(FileSecurity fileSecurity, AccessControlSections includeSections)
+       {
+@@ -616,7 +616,7 @@
+       /// <summary>Gets a full path string representing the file's parent directory.</summary>
+       public string DirectoryName
+       {
+-         get { return MPathInfo.DirectoryName; }
++         get { return Path.GetDirectoryName(OriginalPath); }
+       }
+ 
+       #endregion // DirectoryName
+@@ -678,7 +678,7 @@
+       /// </remarks>
+       public override string Name
+       {
+-         get { return MPathInfo.FileName; }
++         get { return System.IO.Path.GetFileName(OriginalPath); }
+       }
+ 
+       #endregion // Name
+Index: AlphaFS/Filesystem/Path.cs
+===================================================================
+--- AlphaFS/Filesystem/Path.cs	(revision 22362)
++++ AlphaFS/Filesystem/Path.cs	(revision 22494)
+@@ -41,19 +41,15 @@
+       #region Fields
+ 
+       /// <summary>AltDirectorySeparatorChar = '/' Provides a platform-specific alternate character used to separate directory levels in a path string that reflects a hierarchical file system organization.</summary>
+-      /// <remarks>Equivalent of <see cref="System.IO.Path.AltDirectorySeparatorChar"/></remarks>
+       public static readonly char AltDirectorySeparatorChar = System.IO.Path.AltDirectorySeparatorChar;
+ 
+       /// <summary>DirectorySeparatorChar = '\' Provides a platform-specific character used to separate directory levels in a path string that reflects a hierarchical file system organization.</summary>
+-      /// <remarks>Equivalent of <see cref="System.IO.Path.DirectorySeparatorChar"/></remarks>
+       public static readonly char DirectorySeparatorChar = System.IO.Path.DirectorySeparatorChar;
+ 
+       /// <summary>PathSeparator = ';' A platform-specific separator character used to separate path strings in environment variables.</summary>
+-      /// <remarks>Equivalent of <see cref="System.IO.Path.PathSeparator"/></remarks>
+       public static readonly char PathSeparator = System.IO.Path.PathSeparator;
+ 
+       /// <summary>VolumeSeparatorChar = ':' Provides a platform-specific Volume Separator character.</summary>
+-      /// <remarks>Equivalent of <see cref="System.IO.Path.VolumeSeparatorChar"/></remarks>
+       public static readonly char VolumeSeparatorChar = System.IO.Path.VolumeSeparatorChar;
+ 
+       #region AlphaFS
+@@ -100,17 +96,14 @@
+       /// <summary>GlobalRootPrefix = "\\?\GLOBALROOT\" Provides standard Windows Volume prefix.</summary>
+       public static readonly string GlobalRootPrefix = string.Format(CultureInfo.CurrentCulture, "{0}{1}{2}", LongPathPrefix, "GLOBALROOT", DirectorySeparatorChar);
+ 
+-
+       /// <summary>MsDosNamespacePrefix = "\\\\.\\" Provides standard Win32 Namespace prefix.</summary>
+       [SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "Ms")]
+       [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Ms")]
+       public static readonly string MsDosNamespacePrefix = string.Format(CultureInfo.CurrentCulture, "{0}{1}{2}{3}.{4}{5}", DirectorySeparatorChar, DirectorySeparatorChar, DirectorySeparatorChar, DirectorySeparatorChar, DirectorySeparatorChar, DirectorySeparatorChar);
+ 
+-
+       /// <summary>SubstitutePrefix = "\??\" Provides a SUBST.EXE Path prefix to a Logical Drive.</summary>
+       public static readonly string SubstitutePrefix = string.Format(CultureInfo.CurrentCulture, "{0}{1}{2}{3}", DirectorySeparatorChar, WildcardQuestion, WildcardQuestion, DirectorySeparatorChar);
+ 
+-
+       /// <summary>VolumePrefix = "\\?\Volume" Provides standard Windows Volume prefix.</summary>
+       public static readonly string VolumePrefix = string.Format(CultureInfo.CurrentCulture, "{0}{1}", LongPathPrefix, "Volume");
+ 
+@@ -138,13 +131,8 @@
+       /// <summary>Changes the extension of a path string.</summary>
+       /// <param name="path">The path information to modify. The path cannot contain any of the characters defined in <see cref="GetInvalidPathChars"/>.</param>
+       /// <param name="extension">The new extension (with or without a leading period). Specify <see langword="null"/> to remove an existing extension from path.</param>
++      /// <returns>The modified path information.</returns>
+       /// <exception cref="ArgumentException">Path contains one or more of the invalid characters defined in GetInvalidPathChars.</exception>
+-      /// <returns>
+-      /// The modified path information.
+-      /// On Windows-based desktop platforms, if <paramref name="path"/> is <see langword="null"/> or an empty string (""), the path information is returned unmodified.
+-      /// If <paramref name="extension"/> is <see langword="null"/>, the returned string contains the specified path with its extension removed.
+-      /// If <paramref name="path"/> has no extension, and <paramref name="extension"/> is not <see langword="null"/>, the returned path string contains <paramref name="extension"/> appended to the end of path.
+-      /// </returns>
+       public static string ChangeExtension(string path, string extension)
+       {
+          return System.IO.Path.ChangeExtension(path, extension);
+@@ -156,63 +144,60 @@
+ 
+       /// <summary>Combines an array of strings into a path.</summary>
+       /// <param name="paths">An array of parts of the path.</param>
++      /// /// <returns>The combined paths.</returns>
+       /// <exception cref="ArgumentException">One of the strings in the array contains one or more of the invalid characters defined in <see cref="GetInvalidPathChars"/>.</exception>
+       /// <exception cref="ArgumentNullException">One of the strings in the array is <see langword="null"/>.</exception>
+-      /// <returns>The combined paths.</returns>
+       public static string Combine(params string[] paths)
+       {
+          if (paths == null)
+             throw new ArgumentNullException("paths");
+ 
+-         int finalSize = 0;
+-         int firstComponent = 0;
+-
+-         // Calculates how large a buffer to allocate and do some precondition checks on the paths passed in.  
+-         for (int i = 0, l = paths.Length; i < l; i++)
++         int capacity = 0;
++         int num = 0;
++         for (int index = 0, l = paths.Length; index < l; ++index)
+          {
+-            if (paths[i] == null)
++            if (paths[index] == null)
+                throw new ArgumentNullException("paths");
+ 
+-            if (paths[i].Length == 0)
+-               continue;
+-
+-            if (IsPathRooted(paths[i]))
++            if (paths[index].Length != 0)
+             {
+-               firstComponent = i;
+-               finalSize = paths[i].Length;
+-            }
+-            else
+-               finalSize += paths[i].Length;
++               CheckInvalidPathChars(paths[index], false);
++               if (IsPathRooted(paths[index]))
++               {
++                  num = index;
++                  capacity = paths[index].Length;
++               }
++               else
++                  capacity += paths[index].Length;
+ 
+-            char ch = paths[i][paths[i].Length - 1];
++               char ch = paths[index][paths[index].Length - 1];
+ 
+-            if (!IsDVsc(ch, null))
+-               finalSize++;
++               if (!IsDVsc(ch, null))
++                  ++capacity;
++            }
+          }
+ 
+-         // The actual path combination.
+-         StringBuilder finalPath = new StringBuilder(finalSize);
+-
+-         for (int i = firstComponent, l = paths.Length; i < l; i++)
++         StringBuilder sb = new StringBuilder(capacity);
++         for (int index = num; index < paths.Length; ++index)
+          {
+-            if (paths[i].Length == 0)
+-               continue;
++            if (paths[index].Length != 0)
++            {
++               if (sb.Length == 0)
++                  sb.Append(paths[index]);
+ 
+-            if (finalPath.Length == 0)
+-               finalPath.Append(paths[i]);
++               else
++               {
++                  char ch = sb[sb.Length - 1];
+ 
+-            else
+-            {
+-               char ch = finalPath[finalPath.Length - 1];
++                  if (!IsDVsc(ch, null))
++                     sb.Append(DirectorySeparatorChar);
+ 
+-               if (!IsDVsc(ch, null))
+-                  finalPath.Append(DirectorySeparatorChar);
+-
+-               finalPath.Append(paths[i]);
++                  sb.Append(paths[index]);
++               }
+             }
+          }
+ 
+-         return finalPath.ToString();
++         return sb.ToString();
+       }
+ 
+       #endregion // Combine
+@@ -224,7 +209,40 @@
+       /// <returns>Directory information for <paramref name="path"/>, or <see langref="null"/> if <paramref name="path"/> denotes a root directory or is <see langref="null"/>. Returns <see langref="string.Empty"/> if <paramref name="path"/> does not contain directory information.</returns>
+       public static string GetDirectoryName(string path)
+       {
+-         return path == null ? null : new PathInfo(path, false).DirectoryName;
++         if (path != null)
++         {
++            CheckInvalidPathChars(path, false);
++
++            if (path.Length > 0)
++            {
++               string str2 = GetRegularPath(path);
++               int length = 0;
++
++               while (length < str2.Length && str2[length] != 63 && str2[length] != 42)
++                  ++length;
++
++               if (length > 0)
++                  GetFullPathInternal(null, str2.Substring(0, length));
++            }
++
++            int rootLength = GetRootLength(path);
++
++            if (path.Length > rootLength)
++            {
++               int length = path.Length;
++
++               if (length == rootLength)
++                  return null;
++
++               while (length > rootLength && path[--length] != DirectorySeparatorChar && path[length] != AltDirectorySeparatorChar)
++               {
++               }
++
++               return path.Substring(0, length);
++            }
++         }
++
++         return null;
+       }
+ 
+       #endregion // GetDirectoryName
+@@ -233,10 +251,10 @@
+ 
+       /// <summary>Returns the extension of the specified path string.</summary>
+       /// <param name="path">The path string from which to get the extension.</param>
+-      /// <returns>The extension of the specified <paramref name="path"/>, or an empty string if the path contains no extension. If the path is <see langword="null"/>, this method returns <see langword="null"/>.</returns>
++      /// <returns>The extension of the specified path (including the period "."), or <see langword="null"/>, or <see langword="string.Empty"/>. If path is <see langword="null"/>, GetExtension returns <see langword="null"/>. If path does not have extension information, GetExtension returns <see langword="string.Empty"/>.</returns>
+       public static string GetExtension(string path)
+       {
+-         return path == null ? null : new PathInfo(path, false).Extension;
++         return System.IO.Path.GetExtension(path);
+       }
+ 
+       #endregion // GetExtension
+@@ -245,15 +263,10 @@
+ 
+       /// <summary>Returns the file name and extension of the specified path string.</summary>
+       /// <param name="path">The path string from which to obtain the file name and extension.</param>
+-      /// <returns>
+-      /// A string consisting of the characters after the last directory character in path.
+-      /// If the last character of <paramref name="path"/> is a <see cref="Path.DirectorySeparatorChar"/> or <see cref="Path.VolumeSeparatorChar"/>, this method returns <see langword="string.Empty"/>.
+-      /// If <paramref name="path"/> is a <see langword="null"/> reference, this method returns <see langword="null"/>.
+-      /// </returns>
+-      /// <remarks>If the last character of <paramref name="path"/> is a directory- or volume-separator character, this method returns <see cref="string.Empty"/>.</remarks>
++      /// <returns>The characters after the last directory character in <paramref name="path"/>. If the last character of <paramref name="path"/> is a directory or volume separator character, this method returns <see langword="string.Empty"/>. If path is <see langword="null"/>, this method returns <see langword="null"/>.</returns>
+       public static string GetFileName(string path)
+       {
+-         return path == null ? null : new PathInfo(path, false).FileName;
++         return System.IO.Path.GetFileName(path);
+       }
+ 
+       #endregion // GetFileName
+@@ -265,7 +278,7 @@
+       /// <returns>The string returned by GetFileName, minus the last period (.) and all characters following it.</returns>
+       public static string GetFileNameWithoutExtension(string path)
+       {
+-         return new PathInfo(path, false).FileNameWithoutExtension;
++         return System.IO.Path.GetFileNameWithoutExtension(path);
+       }
+ 
+       #endregion // GetFileNameWithoutExtension
+@@ -274,21 +287,6 @@
+ 
+       // The AlphaFS implementation replaces the .NET implementation.
+ 
+-      ///// <summary>Returns the absolute path for the current directory.</summary>
+-      ///// <returns>A string containing the fully qualified location of path, such as "C:\MyFile.txt".</returns>
+-      //public static string GetFullPath()
+-      //{
+-      //   return new PathInfo(string.Empty, false).GetFullPath();
+-      //}
+-
+-      ///// <summary>Returns the absolute path for the specified path string.</summary>
+-      ///// <param name="path">The file or directory for which to obtain absolute path information.</param>
+-      ///// <returns>A string containing the fully qualified location of path, such as "C:\MyFile.txt".</returns>
+-      //public static string GetFullPath(string path)
+-      //{
+-      //   return new PathInfo(!string.IsNullOrEmpty(path) ? path : string.Empty, false).GetFullPath();
+-      //}
+-
+       #endregion // GetFullPath
+ 
+       #region GetInvalidFileNameChars
+@@ -306,7 +304,6 @@
+ 
+       /// <summary>Gets an array containing the characters that are not allowed in path names.</summary>
+       /// <returns>An array containing the characters that are not allowed in path names.</returns>
+-      /// <remarks>This method calls <see cref="System.IO.Path.GetInvalidPathChars"/></remarks>
+       public static char[] GetInvalidPathChars()
+       {
+          return System.IO.Path.GetInvalidPathChars();
+@@ -318,13 +315,13 @@
+ 
+       /// <summary>Gets the root directory information of the specified path.</summary>
+       /// <param name="path">The path from which to obtain root directory information.</param>
+-      /// <returns>The root directory of path, such as "C:\", or <see langword="null"/> if path is <see langword="null"/>, or an empty string if path does not contain root directory information.</returns>
++      /// <returns>The root directory of <paramref name="path"/>, such as "C:\", or <see langword="null"/> if <paramref name="path"/> is <see langword="null"/>, or an empty string if <paramref name="path"/> does not contain root directory information.</returns>
+       public static string GetPathRoot(string path)
+       {
+-         // .NET doesn't handle paths well that start with: \\?\UNC\
+-         //return System.IO.Path.GetPathRoot(path);
++         if (path == null)
++            return null;
+ 
+-         return path == null ? null : new PathInfo(path, false).Root;
++         return path.Substring(0, GetRootLength(path));
+       }
+ 
+       #endregion // GetPathRoot
+@@ -333,7 +330,6 @@
+ 
+       /// <summary>Returns a random folder name or file name.</summary>
+       /// <returns>A random folder name or file name.</returns>
+-      /// <remarks>This method calls <see cref="System.IO.Path.GetRandomFileName"/></remarks>
+       [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
+       public static string GetRandomFileName()
+       {
+@@ -345,8 +341,7 @@
+       #region GetTempFileName
+ 
+       /// <summary>Creates a uniquely named, zero-byte temporary file on disk and returns the full path of that file.</summary>
+-      /// <returns>A <see cref="string"/> containing the full path of the temporary file.</returns>
+-      /// <remarks>This method calls <see cref="System.IO.Path.GetTempFileName"/></remarks>
++      /// <returns>The full path of the temporary file.</returns>
+       [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
+       public static string GetTempFileName()
+       {
+@@ -358,13 +353,7 @@
+       #region GetTempPath
+ 
+       /// <summary>Returns the path of the current user's temporary folder.</summary>
+-      /// <exception cref="SecurityException">The caller does not have the required permissions.</exception>
+-      /// <returns>
+-      /// A <see cref="string"/> containing the path information of a temporary directory.
+-      /// If <see param="combineFolder"/> is specified,  and <see cref="GetLongPath"/>
+-      /// are applied, path validity is then checked through the <see cref="PathInfo"/> class.
+-      /// </returns>
+-      /// <remarks>This method calls <see cref="System.IO.Path.GetTempPath"/></remarks>
++      /// <returns>The path to the temporary folder, ending with a backslash.</returns>
+       public static string GetTempPath()
+       {
+          return System.IO.Path.GetTempPath();
+@@ -373,32 +362,11 @@
+       #region AlphaFS
+ 
+       /// <summary>Returns the path of the current user's temporary folder.</summary>
+-      /// <param name="combinePath">A <see cref="string"/> foldername to append to the TempPath.</param>
+-      /// <exception cref="SecurityException">The caller does not have the required permissions.</exception>
+-      /// <exception cref="ArgumentException">Invalid Path Chars.</exception>
+-      /// <returns>A <see cref="string"/> containing the path information of a temporary directory.</returns>
+-      /// <remarks>
+-      /// The GetTempPath function checks for the existence of environment variables
+-      /// in the following order and uses the first path found:
+-      ///     The path specified by the TMP environment variable.
+-      ///     The path specified by the TEMP environment variable.
+-      ///     The path specified by the USERPROFILE environment variable.
+-      ///     The Windows directory.
+-      ///
+-      /// Note that the function does not verify that the path exists, nor does it test to see if the current
+-      /// process has any kind of access rights to the path. The GetTempPath function returns the properly
+-      /// formatted string that specifies the fully-qualified path based on the environment variable search
+-      /// order as previously specified. The application should verify the existence of the path and adequate
+-      /// access rights to the path prior to any use for file I/O operations.
+-      ///
+-      /// Symbolic link behavior; if the path points to a symbolic link, the temp path name maintains any symbolic links.
+-      /// </remarks>
++      /// <param name="combinePath">A <see cref="string"/> foldername to append to the temporary folder.</param>
++      /// <returns>The path to the temporary folder, combined with <paramref name="combinePath"/>.</returns>
+       public static string GetTempPath(string combinePath)
+       {
+-         CheckInvalidPathChars(combinePath);
+-
+-         string tempPath = GetTempPath();
+-
++         string tempPath = System.IO.Path.GetTempPath();
+          return !string.IsNullOrEmpty(combinePath) ? Combine(tempPath, combinePath) : tempPath;
+       }
+ 
+@@ -410,10 +378,10 @@
+ 
+       /// <summary>Determines whether a path includes a file name extension.</summary>
+       /// <param name="path">The path to search for an extension.</param>
+-      /// <returns><c>true</c> if the specified path has extension, <c>false</c> otherwise.</returns>
++      /// <returns><c>true</c> if the characters that follow the last directory separator (\\ or /) or volume separator (:) in the path include a period (.) followed by one or more characters; otherwise, <c>false</c>.</returns>
+       public static bool HasExtension(string path)
+       {
+-         return path != null && new PathInfo(path, false).HasExtension;
++         return System.IO.Path.HasExtension(path);
+       }
+ 
+       #endregion // HasExtension
+@@ -422,16 +390,12 @@
+ 
+       /// <summary>Gets a value indicating whether the specified path string contains absolute or relative path information.</summary>
+       /// <param name="path">The path to test.</param>
+-      /// <returns><c>true</c> if <paramref name="path"/> contains an absolute path, <c>false</c> otherwise.</returns>
++      /// <returns><c>true</c> if <paramref name="path"/> contains a root; otherwise, <c>false</c>.</returns>
+       /// <remarks>The IsPathRooted method returns <c>true</c> if the first character is a directory separator character such as <see cref="DirectorySeparatorChar"/>, or if the path starts with a drive letter and colon (<see cref="VolumeSeparatorChar"/>). For example, it returns true for path strings such as "\\MyDir\\MyFile.txt", "C:\\MyDir", or "C:MyDir". It returns false for path strings such as "MyDir".</remarks>
+       /// <remarks>This method does not verify that the path or file name exists.</remarks>
+       public static bool IsPathRooted(string path)
+       {
+-         // A bit overkill.
+-         //return path != null && new PathInfo(path, false).IsRooted;
+-
+-         // Same as: PathInfo.IsRooted;
+-         return path != null && (path.Length >= 1 && IsDVsc(path[0], false) || (path.Length >= 2 && IsDVsc(path[1], true)));
++         return System.IO.Path.IsPathRooted(path);
+       }
+ 
+       #endregion // IsPathRooted
+@@ -645,8 +609,10 @@
+                   PathInfo pathInfo = new PathInfo(dosPath, false);
+ 
+                   string path = pathInfo.SuffixedDirectoryNameWithoutRoot;
+-                  string driveLetter = RemoveDirectorySeparator(pathInfo.Root, false);
+-                  string file = pathInfo.FileName;
++                  //string driveLetter = RemoveDirectorySeparator(pathInfo.Root, false);
++                  string driveLetter = RemoveDirectorySeparator(GetPathRoot(dosPath), false);
++                  //string file = pathInfo.FileName;
++                  string file = System.IO.Path.GetFileName(dosPath);
+ 
+                   if (!string.IsNullOrEmpty(file))
+                   {
+@@ -676,97 +642,44 @@
+ 
+       /// <summary>Returns the absolute path for the specified path string.</summary>
+       /// <param name="path">The file or directory for which to obtain absolute path information.</param>
+-      /// <returns>A <see langref="String"/> string containing the fully qualified location of path, such as "C:\MyFile.txt".</returns>
+-      /// <remarks>This parameter can be a short (the 8.3 form) or long file name. This string can also be a share or volume name.</remarks>
+-      /// <remarks>The GetFullPathName function is not recommended for multithreaded applications or shared library code.</remarks>
++      /// <returns>The fully qualified location of path, such as "C:\MyFile.txt".</returns>
++      /// <remarks>GetFullPath is not recommended for multithreaded applications or shared library code.</remarks>
+       public static string GetFullPath(string path)
+       {
+-         return GetFullPath(null, path);
++         return GetFullPathInternal(null, path);
+       }
+ 
++      #region Transacted
++
+       /// <summary>Returns the absolute path for the specified path string.</summary>
+       /// <param name="transaction">The transaction.</param>
+       /// <param name="path">The file or directory for which to obtain absolute path information.</param>
+-      /// <returns>A <see langref="String"/> string containing the fully qualified location of path, such as "C:\MyFile.txt".</returns>
+-      /// <remarks>This parameter can be a short (the 8.3 form) or long file name. This string can also be a share or volume name.</remarks>
+-      /// <remarks>The GetFullPathName function is not recommended for multithreaded applications or shared library code.</remarks>
++      /// <returns>The fully qualified location of path, such as "C:\MyFile.txt".</returns>
++      /// <remarks>GetFullPath is not recommended for multithreaded applications or shared library code.</remarks>
+       public static string GetFullPath(KernelTransaction transaction, string path)
+       {
+-         if (string.IsNullOrEmpty(path))
+-            throw new ArgumentNullException("path");
++         return GetFullPathInternal(transaction, path);
++      }
+ 
+-         // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+-         // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+-         // 2013-04-15: MSDN confirms LongPath usage.
++      #endregion Transacted
+ 
+-         // Doesn't work reliable with relative paths.
+-         //string pathLp = IsPathRooted(path) ? PrefixLongPath(path) : path;
+-         string pathLp = path;
+-
+-
+-         // Start with a large buffer to prevent multiple calls.
+-         uint bufferSize = NativeMethods.MaxPathUnicode;
+-         StringBuilder buffer;
+-         bool isDone = false;
+-
+-         do
+-         {
+-            buffer = new StringBuilder((int)bufferSize);
+-            uint returnLength = transaction == null
+-                                   ? NativeMethods.GetFullPathName(pathLp, bufferSize, buffer, IntPtr.Zero)
+-                                   : NativeMethods.GetFullPathNameTransacted(pathLp, bufferSize, buffer, IntPtr.Zero, transaction.SafeHandle);
+-
+-            switch (returnLength)
+-            {
+-               case Win32Errors.ERROR_SUCCESS:
+-                  NativeError.ThrowException(path);
+-                  break;
+-
+-               default:
+-                  isDone = bufferSize > returnLength;
+-                  if (!isDone)
+-                     bufferSize *= 2;
+-                  break;
+-            }
+-         } while (!isDone);
+-
+-         return buffer.ToString();
+-      }
+-
+       #endregion // GetFullPath
+ 
+       #region GetLongPath
+ 
+-      /// <summary>Retrieves the full long (or extended) unicode version of the specified <paramref name="path"/>.</summary>
+-      /// <remarks><para>This method takes care of different path conversions to be usable in Unicode variants of the Win32 functions (which are internally used throughout AlphaFS).</para>
+-      /// <para>Regular paths are changed like the following:
+-      ///		<list type="table">
+-      ///			<item>
+-      ///				<term><c>C:\Somewhere\Something.txt</c></term>
+-      ///				<description><c>\\?\C:\Somewhere\Something.txt</c></description>
+-      ///			</item>
+-      ///			<item>
+-      ///				<term><c>\\Somewhere\Something.txt</c></term>
+-      ///				<description><c>\\?\UNC\Somewhere\Something.txt</c></description>
+-      ///			</item>
+-      ///		</list>
+-      /// </para>
+-      /// <para>Already processed paths are preserved untouched so to avoid mistakes of double prefixing.</para>
+-      /// <para>
+-      ///		If the <paramref name="path"/> is not an absolute path, or is not rooted, the path of the
+-      ///		current directory (and drive) is combined with the specified <paramref name="path"/> to form
+-      ///		an absolute path.
+-      /// </para>
+-      /// </remarks>
+-      /// <param name="path">File or Folder name to sanitize and prefix with proper standard.</param>
+-      /// <returns>The full long (or extended) unicode version of the specified <paramref name="path"/>.</returns>
+-      /// <remarks>
+-      /// Method <see cref="GetLongPath"/> creates a <see cref="PathInfo"/> instance which may call <see cref="Directory.GetCurrentDirectory()"/>, yielding possible unexpected results.
+-      /// Method <see cref="PrefixLongPath"/> only prefixes a <see cref="LongPathPrefix"/> to the specified <paramref name="path"/>.
+-      /// </remarks>
++      /// <summary>Makes a Unicode path (LongPath) of the specified <paramref name="path"/> by prefixing <see cref="LongPathPrefix"/>.</summary>
++      /// <param name="path">The path to the directory or file, this may also be an UNC path.</param>
++      /// <returns>The <paramref name="path"/> prefixed with a <see cref="LongPathPrefix"/>.</returns>
+       public static string GetLongPath(string path)
+       {
+-         return new PathInfo(path, false).GetLongPath();
++         if (path == null)
++            return null;
++
++         return path.StartsWith(LongPathPrefix, StringComparison.OrdinalIgnoreCase)
++            ? path
++            : (path.StartsWith(UncPrefix, StringComparison.OrdinalIgnoreCase)
++               ? LongPathUncPrefix + path.Substring(UncPrefix.Length)
++               : LongPathPrefix + path);
+       }
+ 
+       #endregion // GetLongPath
+@@ -817,7 +730,7 @@
+ 
+       #region GetRegularPath
+ 
+-      /// <summary>Gets the regular path from long prefixed one. i.e. \\?\C:\Temp\file.txt to C:\Temp\file.txt  \\?\UNC\Server\share\file.txt to \\Server\share\file.txt</summary>
++      /// <summary>Gets the regular path from long prefixed one. i.e.: \\?\C:\Temp\file.txt to C:\Temp\file.txt or: \\?\UNC\Server\share\file.txt to \\Server\share\file.txt</summary>
+       /// <param name="path">The path.</param>
+       /// <returns>Regular form path string.</returns>
+       /// <remarks>This method does not handle paths with volume names, eg. \\?\Volume{GUID}\Folder\file.txt </remarks>
+@@ -920,10 +833,10 @@
+       public static bool IsUnc(string path)
+       {
+          return !string.IsNullOrEmpty(path) && (path.StartsWith(UncPrefix, StringComparison.OrdinalIgnoreCase)
+-                                                   ? path.StartsWith(LongPathUncPrefix, StringComparison.OrdinalIgnoreCase) ||
+-                                                     !path.StartsWith(LongPathPrefix, StringComparison.OrdinalIgnoreCase)
+-                                                   : path.StartsWith(DosDeviceLanmanPrefix + ";", StringComparison.OrdinalIgnoreCase) ||
+-                                                     path.StartsWith(DosDeviceMupPrefix + ";", StringComparison.OrdinalIgnoreCase));
++            ? path.StartsWith(LongPathUncPrefix, StringComparison.OrdinalIgnoreCase) ||
++              !path.StartsWith(LongPathPrefix, StringComparison.OrdinalIgnoreCase)
++            : path.StartsWith(DosDeviceLanmanPrefix + ";", StringComparison.OrdinalIgnoreCase) ||
++              path.StartsWith(DosDeviceMupPrefix + ";", StringComparison.OrdinalIgnoreCase));
+ 
+          // Only a real network share has a DosDeviceLanmanPrefix on the DosDevice level.
+       }
+@@ -937,7 +850,7 @@
+       /// <returns>True or False</returns>
+       public static bool IsValidName(string name)
+       {
+-         return name != null && !(name.IndexOfAny(GetInvalidFileNameChars()) >= 0);
++         return !string.IsNullOrEmpty(name) && !(name.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0);
+       }
+ 
+       #endregion // IsValidName
+@@ -949,29 +862,10 @@
+       /// <returns><c>true</c> if <paramref name="path"/> is a valid path, <c>false</c> otherwise.</returns>
+       public static bool IsValidPath(string path)
+       {
+-         return IsValidPath(path, false);
++         return !string.IsNullOrEmpty(GetFullPathInternal(null, path));
+       }
++      
+ 
+-      /// <summary>Verifies that the specified <paramref name="path"/> is valid and optionally may contain wildcards.</summary>
+-      /// <param name="path">The string to test if it contains a valid path.</param>
+-      /// <param name="allowWildcards">If set to <c>true</c> wildcards are allowed in the filename part of the path, otherwise the presence of wildcards will render the path invalid.</param>
+-      /// <returns><c>true</c> if <paramref name="path"/> is a valid path, <c>false</c> otherwise.</returns>
+-      public static bool IsValidPath(string path, bool allowWildcards)
+-      {
+-         if (string.IsNullOrEmpty(path))
+-            return false;
+-
+-         try
+-         {
+-            PathInfo pi = new PathInfo(path, allowWildcards);
+-            return !string.IsNullOrEmpty(pi.GetFullPath());
+-         }
+-         catch (ArgumentException)
+-         {
+-            return false;
+-         }
+-      }
+-
+       #endregion // IsValidPath
+ 
+       #region LocalToUnc
+@@ -994,6 +888,7 @@
+          
+          // Will return null when no valid drive letter can be created.
+          string drive = MakeDriveLetter(localPath);
++
+          if (string.IsNullOrEmpty(drive))
+             return string.Empty;
+ 
+@@ -1032,36 +927,12 @@
+          path = GetRegularPath(path);
+ 
+          return IsLogicalDrive(path)
+-                   ? string.Format(CultureInfo.CurrentCulture, "{0}{1}", path[0], VolumeSeparatorChar)
+-                   : null;
++            ? string.Format(CultureInfo.CurrentCulture, "{0}{1}", path[0], VolumeSeparatorChar)
++            : null;
+       }
+ 
+       #endregion // MakeDriveLetter
+ 
+-      #region PrefixLongPath
+-
+-      /// <summary>Makes a Unicode path (LongPath) of the specified <paramref name="path"/> by prefixing <see cref="LongPathPrefix"/>.</summary>
+-      /// <param name="path">The path to the directory or file, this may also be an UNC path.</param>
+-      /// <returns>The <paramref name="path"/> prefixed with a <see cref="LongPathPrefix"/>.</returns>
+-      /// <remarks>No path validity checking is performed.</remarks>
+-      /// <remarks>
+-      /// Method <see cref="PrefixLongPath"/> only prefixes a <see cref="LongPathPrefix"/> to the specified <paramref name="path"/>.
+-      /// Method <see cref="GetLongPath"/> creates a <see cref="PathInfo"/> instance which may call <see cref="Directory.GetCurrentDirectory()"/>, yielding possible unexpected results.
+-      /// </remarks>
+-      public static string PrefixLongPath(string path)
+-      {
+-         if (path == null)
+-            return null;
+-
+-         return path.StartsWith(LongPathPrefix, StringComparison.OrdinalIgnoreCase)
+-                   ? path
+-                   : (path.StartsWith(UncPrefix, StringComparison.OrdinalIgnoreCase)
+-                         ? LongPathUncPrefix + path.Substring(UncPrefix.Length)
+-                         : LongPathPrefix + path);
+-      }
+-
+-      #endregion // PrefixLongPath
+-
+       #region RemoveDirectorySeparator
+ 
+       /// <summary>Removes the <see cref="DirectorySeparatorChar"/> character from the string.</summary>
+@@ -1085,24 +956,21 @@
+ 
+       #endregion // RemoveDirectorySeparator
+ 
++
+       #region Internal Utility
+ 
+       #region CheckInvalidPathChars
+-
++      
+       /// <summary>Checks that the path contains only valid path-characters.</summary>
+       /// <param name="path">A path to the directory or file.</param>
+-      internal static void CheckInvalidPathChars(string path)
++      /// <param name="checkAdditional"></param>
++      internal static void CheckInvalidPathChars(string path, bool checkAdditional)
+       {
+          if (path == null)
+             throw new ArgumentNullException("path");
+ 
+-         for (int i = 0, l = path.Length; i < l; i++)
+-         {
+-            int c = path[i];
+-
+-            if (System.IO.Path.GetInvalidPathChars().Any(invalidChar => c == invalidChar))
+-               throw new ArgumentException("Invalid Path Chars");
+-         }
++         if (HasIllegalCharacters(path, checkAdditional))
++            throw new ArgumentException("Invalid Path Chars");
+       }
+ 
+       #endregion // CheckInvalidPathChars
+@@ -1116,7 +984,7 @@
+       /// <param name="deviceReplacement">Alternate path/device text, usually <see cref="string.Empty"/> or <see langword="null"/>.</param>
+       /// <returns>A translated dos path.</returns>
+       [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
+-      internal static string DosDeviceToDosPath(string dosDevice, string deviceReplacement)
++      private static string DosDeviceToDosPath(string dosDevice, string deviceReplacement)
+       {
+          if (string.IsNullOrEmpty(dosDevice))
+             return string.Empty;
+@@ -1154,6 +1022,67 @@
+ 
+       #endregion // EndsWithDVsc
+ 
++      #region GetRootLength
++
++      internal static int GetRootLength(string path)
++      {
++         CheckInvalidPathChars(path, false);
++
++         int index = 0;
++         int length = path.Length;
++
++         if (length >= 1 && IsDVsc(path[0], false))
++         {
++            index = 1;
++            if (length >= 2 && IsDVsc(path[1], false))
++            {
++               index = 2;
++               int num = 2;
++
++               while (index < length && (!IsDVsc(path[index], false) || --num > 0))
++                  ++index;
++            }
++         }
++         else if (length >= 2 && IsDVsc(path[1], true))
++         {
++            index = 2;
++            if (length >= 3 && IsDVsc(path[2], false))
++               ++index;
++         }
++
++         return index;
++      }
++
++      #endregion // GetRootLength
++
++      #region HasIllegalCharacters
++
++      private static bool HasIllegalCharacters(string path, bool checkAdditional)
++      {
++         for (int index = 0, l = path.Length; index < l; ++index)
++         {
++            int num = path[index];
++            switch (num)
++            {
++               case 34:
++               case 60:
++               case 62:
++               case 124:
++                  return true;
++
++               default:
++                  if (num >= 32 && (!checkAdditional || num != 63 && num != 42))
++                     continue;
++
++                  goto case 34;
++            }
++         }
++
++         return false;
++      }
++
++      #endregion // HasIllegalCharacters
++
+       #region IsDVsc
+ 
+       /// <summary>Check if <paramref name="c"/> is a directory- and/or volume-separator character.</summary>
+@@ -1168,13 +1097,13 @@
+       {
+          return checkVolumeSeparatorChar == null
+ 
+-                   // Check for all separator characters.
+-                   ? c == DirectorySeparatorChar || c == AltDirectorySeparatorChar || c == VolumeSeparatorChar
++            // Check for all separator characters.
++            ? c == DirectorySeparatorChar || c == AltDirectorySeparatorChar || c == VolumeSeparatorChar
+ 
+-                   // Check for some separator characters.
+-                   : ((bool) checkVolumeSeparatorChar
+-                         ? c == VolumeSeparatorChar
+-                         : c == DirectorySeparatorChar || c == AltDirectorySeparatorChar);
++            // Check for some separator characters.
++            : ((bool) checkVolumeSeparatorChar
++               ? c == VolumeSeparatorChar
++               : c == DirectorySeparatorChar || c == AltDirectorySeparatorChar);
+       }
+ 
+       #endregion // IsDVsc
+@@ -1183,6 +1112,59 @@
+ 
+       #region Unified Internals
+ 
++      #region GetFullPathInternal
++
++      /// <summary>Unified method GetFullPathInternal() to retrieve the absolute path for the specified path string.</summary>
++      /// <param name="transaction">The transaction.</param>
++      /// <param name="path">The file or directory for which to obtain absolute path information.</param>
++      /// <returns>The fully qualified location of path, such as "C:\MyFile.txt".</returns>
++      /// <remarks>GetFullPath does not work reliable with relative paths.</remarks>
++      /// <remarks>GetFullPath is not recommended for multithreaded applications or shared library code.</remarks>
++      public static string GetFullPathInternal(KernelTransaction transaction, string path)
++      {
++         if (string.IsNullOrEmpty(path))
++            throw new ArgumentNullException("path");
++
++         // In the ANSI version of this function, the name is limited to MAX_PATH characters.
++         // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
++         // 2013-04-15: MSDN confirms LongPath usage.
++
++         // Doesn't work reliable with relative paths.
++         //string pathLp = IsPathRooted(path) ? GetLongPath(path) : path;
++         string pathLp = path;
++
++
++         // Start with a large buffer to prevent multiple calls.
++         uint bufferSize = NativeMethods.MaxPathUnicode;
++         StringBuilder buffer;
++         bool isDone = false;
++
++         do
++         {
++            buffer = new StringBuilder((int)bufferSize);
++            uint returnLength = transaction == null
++                                   ? NativeMethods.GetFullPathName(pathLp, bufferSize, buffer, IntPtr.Zero)
++                                   : NativeMethods.GetFullPathNameTransacted(pathLp, bufferSize, buffer, IntPtr.Zero, transaction.SafeHandle);
++
++            switch (returnLength)
++            {
++               case Win32Errors.ERROR_SUCCESS:
++                  NativeError.ThrowException(path);
++                  break;
++
++               default:
++                  isDone = bufferSize > returnLength;
++                  if (!isDone)
++                     bufferSize *= 2;
++                  break;
++            }
++         } while (!isDone);
++
++         return buffer.ToString();
++      }
++
++      #endregion GetFullPathInternal
++
+       #region GetLongShort83PathInternal
+ 
+       /// <summary>Unified method GetLongShort83PathInternal() to retrieve the short path form, or the regular long form of the specified path.</summary>
+@@ -1192,7 +1174,6 @@
+       /// <remarks>Will fail on NTFS volumes with disabled 8.3 name generation.</remarks>
+       /// <remarks>The path must actually exist to be able to get the short- or long path name.</remarks>
+       /// <exception cref="NativeError.ThrowException()"/>
+-      [SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "lastError")]
+       [SecurityCritical]
+       internal static string GetLongShort83PathInternal(string path, bool getShort)
+       {
+@@ -1202,7 +1183,7 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-28: MSDN confirms LongPath usage.
+-         string pathLp = PrefixLongPath(path);
++         string pathLp = GetLongPath(path);
+ 
+          StringBuilder buffer = new StringBuilder();
+          uint actualLength = (uint) path.Length;
+@@ -1214,8 +1195,8 @@
+             {
+                buffer = new StringBuilder((int) actualLength);
+                actualLength = getShort
+-                                 ? NativeMethods.GetShortPathName(pathLp, buffer, (uint) buffer.Capacity)
+-                                 : NativeMethods.GetLongPathName(pathLp, buffer, (uint) buffer.Capacity);
++                  ? NativeMethods.GetShortPathName(pathLp, buffer, (uint) buffer.Capacity)
++                  : NativeMethods.GetLongPathName(pathLp, buffer, (uint) buffer.Capacity);
+ 
+                if (actualLength == Win32Errors.ERROR_SUCCESS)
+                   NativeError.ThrowException(pathLp);
+Index: AlphaFS/Filesystem/SafeSetupDiClassDevsHandle.cs
+===================================================================
+--- AlphaFS/Filesystem/SafeSetupDiClassDevsHandle.cs	(nonexistent)
++++ AlphaFS/Filesystem/SafeSetupDiClassDevsHandle.cs	(revision 22494)
+@@ -0,0 +1,59 @@
++/* Copyright (c) 2008-2009 Peter Palotas
++ *  
++ *  Permission is hereby granted, free of charge, to any person obtaining a copy
++ *  of this software and associated documentation files (the "Software"), to deal
++ *  in the Software without restriction, including without limitation the rights
++ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ *  copies of the Software, and to permit persons to whom the Software is
++ *  furnished to do so, subject to the following conditions:
++ *  
++ *  The above copyright notice and this permission notice shall be included in
++ *  all copies or substantial portions of the Software.
++ *  
++ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ *  THE SOFTWARE.
++ */
++using System;
++using System.Diagnostics.CodeAnalysis;
++using Microsoft.Win32.SafeHandles;
++
++namespace Alphaleonis.Win32.Filesystem
++{
++    ///// 2013-03-15: Yomodo; Disabled for Now, not used.
++    ///// <summary>Represents a wrapper class for a handle used by the SetupDiXxx Win32 API functions.</summary>
++    //[SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "Di")]
++    //public sealed class SafeSetupDiClassDevsHandle : SafeHandleZeroOrMinusOneIsInvalid
++    //{
++    //    /// <summary>
++    //    /// Initializes a new instance of the <see cref="SafeSetupDiClassDevsHandle"/> class.
++    //    /// </summary>
++    //    private SafeSetupDiClassDevsHandle() : base(true){}
++
++    //    /// <summary>
++    //    /// Initializes a new instance of the <see cref="SafeSetupDiClassDevsHandle"/> class.
++    //    /// </summary>
++    //    /// <param name="handle">The handle.</param>
++    //    /// <param name="ownsHandle">if set to <c>true</c> [owns handle].</param>
++    //    public SafeSetupDiClassDevsHandle(IntPtr handle, Boolean ownsHandle) : base(ownsHandle)
++    //    {
++    //        SetHandle(handle);
++    //    }
++
++    //    /// <summary>
++    //    /// When overridden in a derived class, executes the code required to free the handle.
++    //    /// </summary>
++    //    /// <returns>
++    //    /// true if the handle is released successfully; otherwise, in the event of a catastrophic failure, false.
++    //    /// In this case, it generates a ReleaseHandleFailed Managed Debugging Assistant.
++    //    /// </returns>
++    //    override protected Boolean ReleaseHandle()
++    //    {
++    //        return NativeMethods.SetupDiDestroyDeviceInfoList(handle);
++    //    }
++    //}
++}
+\ No newline at end of file
+Index: AlphaFS/Filesystem/FileSystemInfo.cs
+===================================================================
+--- AlphaFS/Filesystem/FileSystemInfo.cs	(revision 22362)
++++ AlphaFS/Filesystem/FileSystemInfo.cs	(revision 22494)
+@@ -231,9 +231,8 @@
+             path = Path.RemoveDirectorySeparator(path, false);
+          
+          MPathInfo = new PathInfo(path, false);
+-         FullPath = MPathInfo.GetFullPath();
++         FullPath = Path.GetFullPathInternal(transaction, path);
+          
+-         //OriginalPath = isFolder ? MPathInfo.Path : MPathInfo.FileName;
+          OriginalPath = path;
+       }
+ 
+@@ -328,7 +327,7 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN confirms LongPath usage.
+-         pathLp = Path.PrefixLongPath(pathLp);
++         pathLp = Path.GetLongPath(pathLp);
+ 
+ 
+          PrivilegeEnabler privilegeEnabler = null;
+@@ -449,7 +448,7 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN confirms LongPath usage.
+-         string orgPathLp = Path.PrefixLongPath(path);
++         string orgPathLp = Path.GetLongPath(path);
+          string pathLp = orgPathLp;
+ 
+          // A trailing backslash is not allowed and will be removed.
+@@ -488,7 +487,7 @@
+                       ? NativeMethods.GetFileAttributesEx(pathLp, 0, ref win32AttrData)
+                       : NativeMethods.GetFileAttributesTransacted(pathLp, 0, ref win32AttrData, transaction.SafeHandle))
+                {
+-                  win32FindData.FileName = new PathInfo(pathLp, false).FileName;
++                  win32FindData.FileName = System.IO.Path.GetFileName(pathLp);
+                   win32FindData.AlternateFileName = string.Empty;
+                   win32FindData.FileAttributes = win32AttrData.FileAttributes;
+                   win32FindData.CreationTime = win32AttrData.CreationTime;
+@@ -516,7 +515,7 @@
+          string pathRp = Path.GetRegularPath(pathLp);
+          return new FileSystemEntryInfo(win32FindData)
+          {
+-            FullPath = Path.IsPathRooted(pathRp) && !win32FindData.FileName.Equals(pathRp, StringComparison.OrdinalIgnoreCase)
++            FullPath = System.IO.Path.IsPathRooted(pathRp) && !win32FindData.FileName.Equals(pathRp, StringComparison.OrdinalIgnoreCase)
+                ? pathRp
+                : string.Empty
+          };
+@@ -561,7 +560,7 @@
+          {
+             string fullPath = fsei.FullPath;
+ 
+-            // Return full path as a type: string.
++            // Return full path as type: string.
+             if (getPath)
+                yield return fullPath;
+ 
+@@ -690,7 +689,7 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN confirms LongPath usage.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          bool setAttr = transaction == null
+                            ? NativeMethods.SetFileAttributes(pathLp, fileAttributes)
+@@ -725,7 +724,7 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN confirms LongPath usage.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          using (SafeGlobalMemoryBufferHandle hCreationTime = SafeGlobalMemoryBufferHandle.CreateFromLong(creationTime))
+          using (SafeGlobalMemoryBufferHandle hLastAccessTime = SafeGlobalMemoryBufferHandle.CreateFromLong(lastAccessTime))
+@@ -788,7 +787,7 @@
+          }
+ 
+          [SecurityCritical]
+-         protected set
++         set
+          {
+             if (_systemInfo == null)
+                VerifyObjectExists();
+@@ -853,7 +852,7 @@
+       /// <summary>Gets the string representing the extension part of the file.</summary>
+       public string Extension
+       {
+-         get { return MPathInfo.Extension; }
++         get { return System.IO.Path.GetExtension(OriginalPath); }
+       }
+ 
+       #endregion // Extension
+Index: AlphaFS/Filesystem/FileSystemEntry.cs
+===================================================================
+--- AlphaFS/Filesystem/FileSystemEntry.cs	(revision 22362)
++++ AlphaFS/Filesystem/FileSystemEntry.cs	(revision 22494)
+@@ -117,7 +117,7 @@
+             if (string.IsNullOrEmpty(value))
+                throw new ArgumentNullException(InputPath);
+ 
+-            Path.CheckInvalidPathChars(value);
++            Path.CheckInvalidPathChars(value, false);
+ 
+             _inputPath = value;
+          }
+@@ -225,7 +225,7 @@
+             // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+             // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+             // 2013-01-13: MSDN confirms LongPath usage.
+-            pathLp = Path.PrefixLongPath(pathLp);
++            pathLp = Path.GetLongPath(pathLp);
+ 
+             // A trailing backslash is not allowed and will be removed.
+             pathLp = Path.RemoveDirectorySeparator(pathLp, false);
+Index: AlphaFS/Filesystem/File.cs
+===================================================================
+--- AlphaFS/Filesystem/File.cs	(revision 22362)
++++ AlphaFS/Filesystem/File.cs	(revision 22494)
+@@ -428,7 +428,7 @@
+          // In the ANSI version of this function, the name is limited to 248 characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          if (!NativeMethods.DecryptFile(pathLp, 0))
+             NativeError.ThrowException(pathLp);
+@@ -516,7 +516,7 @@
+          // In the ANSI version of this function, the name is limited to 248 characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+          
+          if (!NativeMethods.EncryptFile(pathLp))
+             NativeError.ThrowException(pathLp);
+@@ -542,7 +542,7 @@
+       [SecurityCritical]
+       public static bool Exists(string path)
+       {
+-         return FileSystemInfo.ExistsInternal(false, null, path);
++         return !string.IsNullOrEmpty(path) && FileSystemInfo.ExistsInternal(false, null, path);
+       }
+ 
+       #endregion // .NET
+@@ -2125,7 +2125,7 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          uint fileSizeHigh;
+          uint fileSizeLow = transaction == null
+@@ -2160,7 +2160,7 @@
+          // In the ANSI version of this function, the name is limited to 248 characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          FileEncryptionStatus status;
+ 
+@@ -2325,7 +2325,7 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          return GetHardlinksInternal((ref uint length, StringBuilder linkName) => transaction == null
+                ? NativeMethods.FindFirstFileName(pathLp, 0, ref length, linkName)
+@@ -2608,7 +2608,7 @@
+       /// <param name="path">A file to add or remove access control list (ACL) entries from.</param>
+       /// <param name="fileSecurity">A  <see cref="FileSecurity"/> object that describes an ACL entry to apply to the file described by the <paramref name="path"/> parameter.</param>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public static bool SetAccessControl(string path, FileSecurity fileSecurity)
+       {
+@@ -2621,7 +2621,7 @@
+       /// <param name="fileSecurity">A <see cref="FileSecurity "/> object that describes an ACL entry to apply to the directory described by the path parameter.</param>
+       /// <param name="includeSections">One or more of the <see cref="AccessControlSections"/> values that specifies the type of access control list (ACL) information to set.</param>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public static bool SetAccessControl(string path, FileSecurity fileSecurity, AccessControlSections includeSections)
+       {
+@@ -2793,8 +2793,8 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN confirms LongPath usage.
+-         string sourcePathLp = Path.PrefixLongPath(sourcePath);
+-         string destinationPathLp = Path.PrefixLongPath(destinationPath);
++         string sourcePathLp = Path.GetLongPath(sourcePath);
++         string destinationPathLp = Path.GetLongPath(destinationPath);
+          
+          // Setup callback function for progress notifications.
+          NativeMethods.NativeCopyProgressRoutine routine = (copyProgress != null)
+@@ -2831,14 +2831,14 @@
+                   return false;
+ 
+                case Win32Errors.ERROR_FILE_EXISTS:
+-                  raiseException = !overwrite || !DeleteFileInternal(transaction, sourcePath, true);
++                  raiseException = !overwrite || !DeleteFileInternal(transaction, destinationPathLp, true);
+                   break;
+ 
+                // This function fails with ERROR_ACCESS_DENIED if the destination file already exists
+                // and has the FILE_ATTRIBUTE_HIDDEN or FILE_ATTRIBUTE_READONLY attribute set.
+                case Win32Errors.ERROR_ACCESS_DENIED:
+-                  FileSystemInfo.SetAttributesInternal(transaction, destinationPath, FileAttributes.Normal);
+-                  raiseException = !overwrite || !CopyMoveInternal(transaction, sourcePath, destinationPath, preserveDates, copyOptions, null, copyProgress, userProgressData);
++                  FileSystemInfo.SetAttributesInternal(transaction, destinationPathLp, FileAttributes.Normal);
++                  raiseException = !overwrite || !CopyMoveInternal(transaction, sourcePathLp, destinationPathLp, preserveDates, copyOptions, null, copyProgress, userProgressData);
+                   break;
+ 
+                default:
+@@ -2853,8 +2853,8 @@
+          // Apply original Timestamps if requested and action is Copy().
+          if (preserveDates && isCopy)
+             {
+-               FileSystemEntryInfo originalAttributes = FileSystemInfo.GetFileSystemEntryInfoInternal(transaction, sourcePath, false, true);
+-               FileSystemInfo.SetFileTimeInternal(false, transaction, destinationPath, originalAttributes.Win32FindData.CreationTime.ToLong(), originalAttributes.Win32FindData.LastAccessTime.ToLong(), originalAttributes.Win32FindData.LastWriteTime.ToLong());
++               FileSystemEntryInfo originalAttributes = FileSystemInfo.GetFileSystemEntryInfoInternal(transaction, sourcePathLp, false, true);
++               FileSystemInfo.SetFileTimeInternal(false, transaction, destinationPathLp, originalAttributes.Win32FindData.CreationTime.ToLong(), originalAttributes.Win32FindData.LastAccessTime.ToLong(), originalAttributes.Win32FindData.LastWriteTime.ToLong());
+             }
+ 
+          return true;
+@@ -2921,7 +2921,7 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN confirms LongPath usage.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          bool deleteOk = true;
+ 
+Index: AlphaFS/Filesystem/DirectoryInfo.cs
+===================================================================
+--- AlphaFS/Filesystem/DirectoryInfo.cs	(revision 22362)
++++ AlphaFS/Filesystem/DirectoryInfo.cs	(revision 22494)
+@@ -101,7 +101,7 @@
+       [SecurityCritical]
+       public DirectoryInfo CreateSubdirectory(string path)
+       {
+-         return CreateSubdirectory(path, null);
++         return CreateSubdirectoryInternal(path, null);
+       }
+ 
+       /// <summary>Creates a subdirectory or subdirectories on the specified path. The specified path can be relative to this instance of the DirectoryInfo class.</summary>
+@@ -114,18 +114,10 @@
+       /// If the subdirectory already exists, this method does nothing.
+       /// </remarks>
+       /// <exception cref="NativeError.ThrowException()"/>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
+       [SecurityCritical]
+       public DirectoryInfo CreateSubdirectory(string path, DirectorySecurity directorySecurity)
+       {
+-         string subDir = Path.Combine(FullPath, path);
+-         DirectoryInfo newDir = new DirectoryInfo(Transaction, subDir);
+-
+-         return ExistsInternal(true, Transaction, subDir)
+-                   ? newDir
+-                   : Directory.CreateDirectoryInternal(Transaction, null, subDir, directorySecurity, null)
+-                         ? newDir
+-                         : null;
++         return CreateSubdirectoryInternal(path, directorySecurity);
+       }
+ 
+       #endregion // CreateSubdirectory
+@@ -241,7 +233,7 @@
+ 
+       /// <summary>Returns an enumerable collection of <see cref="FileSystemInfo"/> information in the current directory.</summary>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> information in the current directory.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public IEnumerable<FileSystemInfo> EnumerateFileSystemInfos()
+       {
+@@ -251,7 +243,7 @@
+       /// <summary>Returns an enumerable collection of <see cref="FileSystemInfo"/> information that matches a specified search pattern and search subdirectory option.</summary>
+       /// <param name="searchPattern">A search string, the path which has wildcard characters, for example, an asterisk (<see cref="Path.WildcardStarMatchAll"/>) or a question mark (<see cref="Path.WildcardQuestion"/>).</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> information objects that matches searchPattern.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(string searchPattern)
+       {
+@@ -262,7 +254,7 @@
+       /// <param name="searchPattern">A search string, the path which has wildcard characters, for example, an asterisk (<see cref="Path.WildcardStarMatchAll"/>) or a question mark (<see cref="Path.WildcardQuestion"/>).</param>
+       /// <param name="searchOption">One of the <see cref="SearchOption"/> enumeration values that specifies whether the search operation should include only the current directory or should include all subdirectories.</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> information objects that matches searchPattern and searchOption.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(string searchPattern, SearchOption searchOption)
+       {
+@@ -276,7 +268,7 @@
+       /// <param name="searchOption">One of the <see cref="SearchOption"/> enumeration values that specifies whether the search operation should include only the current directory or should include all subdirectories.</param>
+       /// <param name="continueOnAccessError">If set to <c>true</c> skip on access errors resulted from ACLs protected directories or not accessible reparse points, otherwise an <see cref="System.UnauthorizedAccessException"/> is thrown.</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> information objects that matches searchPattern and searchOption.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(string searchPattern, SearchOption searchOption, bool continueOnAccessError)
+       {
+@@ -449,7 +441,7 @@
+       /// For subdirectories, the FileSystemInfo objects returned by this method can be cast to the derived class DirectoryInfo.
+       /// Use the FileAttributes value returned by the Attributes property to determine whether the FileSystemInfo represents a file or a directory.
+       /// </remarks>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public FileSystemInfo[] GetFileSystemInfos()
+       {
+@@ -464,7 +456,7 @@
+       /// For subdirectories, the FileSystemInfo objects returned by this method can be cast to the derived class DirectoryInfo.
+       /// Use the FileAttributes value returned by the Attributes property to determine whether the FileSystemInfo represents a file or a directory.
+       /// </remarks>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public FileSystemInfo[] GetFileSystemInfos(string searchPattern)
+       {
+@@ -480,7 +472,7 @@
+       /// For subdirectories, the FileSystemInfo objects returned by this method can be cast to the derived class DirectoryInfo.
+       /// Use the FileAttributes value returned by the Attributes property to determine whether the FileSystemInfo represents a file or a directory.
+       /// </remarks>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public FileSystemInfo[] GetFileSystemInfos(string searchPattern, SearchOption searchOption)
+       {
+@@ -499,7 +491,7 @@
+       /// For subdirectories, the FileSystemInfo objects returned by this method can be cast to the derived class DirectoryInfo.
+       /// Use the FileAttributes value returned by the Attributes property to determine whether the FileSystemInfo represents a file or a directory.
+       /// </remarks>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public FileSystemInfo[] GetFileSystemInfos(string searchPattern, SearchOption searchOption, bool continueOnAccessError)
+       {
+@@ -785,7 +777,7 @@
+       /// <param name="directorySecurity">The access control to apply to the directory.</param>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+       /// <exception cref="NativeError.ThrowException()"/>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public bool Create(DirectorySecurity directorySecurity)
+       {
+@@ -1175,7 +1167,7 @@
+       /// <summary>Applies access control list (ACL) entries described by a <see cref="DirectorySecurity"/> object to the directory described by the current DirectoryInfo object.</summary>
+       /// <param name="directorySecurity">A <see cref="DirectorySecurity"/> object that describes an ACL entry to apply to the directory described by the path parameter.</param>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public bool SetAccessControl(DirectorySecurity directorySecurity)
+       {
+@@ -1187,7 +1179,7 @@
+       /// <param name="directorySecurity">A <see cref="DirectorySecurity"/> object that describes an ACL entry to apply to the directory described by the path parameter.</param>
+       /// <param name="includeSections">One or more of the <see cref="AccessControlSections"/> values that specifies the type of access control list (ACL) information to set.</param>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public bool SetAccessControl(DirectorySecurity directorySecurity, AccessControlSections includeSections)
+       {
+@@ -1200,9 +1192,34 @@
+       
+       #region Unified Internals
+ 
++      #region CreateSubdirectoryInternal
++
++      /// <summary>Unified method CreateSubdirectory() to create a subdirectory or subdirectories on the specified path. The specified path can be relative to this instance of the DirectoryInfo class.</summary>
++      /// <param name="path">The specified path. This cannot be a different disk volume or Universal Naming Convention (UNC) name.</param>
++      /// <param name="directorySecurity">The <see cref="DirectorySecurity"/> security to apply.</param>
++      /// <returns>The last directory specified in path as an <see cref="DirectoryInfo"/> object.</returns>
++      /// <remarks>
++      /// Any and all directories specified in path are created, unless some part of path is invalid.
++      /// The path parameter specifies a directory path, not a file path.
++      /// If the subdirectory already exists, this method does nothing.
++      /// </remarks>
++      /// <exception cref="NativeError.ThrowException()"/>
++      [SecurityCritical]
++      private DirectoryInfo CreateSubdirectoryInternal(string path, DirectorySecurity directorySecurity)
++      {
++         string subDir = Path.Combine(FullPath, path);
++         DirectoryInfo newDir = new DirectoryInfo(Transaction, subDir);
++
++         return newDir.Exists || Directory.CreateDirectoryInternal(Transaction, null, subDir, directorySecurity, null)
++            ? newDir
++            : null;
++      }
++
++      #endregion // CreateSubdirectoryInternal
++
+       #region CopyToMoveToInternal
+ 
+-      /// <summary>Recursive copying of folders and files from one root to another.</summary>
++      /// <summary>Unified method CopyToMoveToInternal() to recursively copy folders and files from one root to another.</summary>
+       /// <param name="destinationPath">The destination folder path, of type <see cref="string"/></param>
+       /// <param name="preserveSecurity"><c>true</c> Preserves ACLs information.</param>
+       /// <param name="copyOptions"><see cref="CopyOptions"/> that specify how the file is to be copied. This parameter can be <see langword="null"/>.</param>
+@@ -1266,12 +1283,7 @@
+       /// <remarks>Returns only the name of the directory, such as "Bin". To get the full path, such as "c:\public\Bin", use the FullName property.</remarks>
+       public override string Name
+       {
+-         get
+-         {
+-            return MPathInfo.Root.Equals(FullPath, StringComparison.OrdinalIgnoreCase)
+-                      ? FullPath
+-                      : MPathInfo.FileName;
+-         }
++         get { return System.IO.Path.GetFileName(FullPath); }
+       }
+ 
+       #endregion // Name
+@@ -1293,11 +1305,7 @@
+       /// <returns>A <see cref="DirectoryInfo"/> object that represents the root of the directory.</returns>
+       public DirectoryInfo Root
+       {
+-         get
+-         {
+-            //return new DirectoryInfo(Transaction, new PathInfo(new PathInfo(FullPath, false).GetFullPath(), false).Root);
+-            return new DirectoryInfo(Transaction, new PathInfo(FullPath, false).Root);
+-         }
++         get { return new DirectoryInfo(Transaction, Path.GetPathRoot(FullPath)); }
+       }
+ 
+       #endregion // Root
+Index: AlphaFS/Filesystem/Directory.cs
+===================================================================
+--- AlphaFS/Filesystem/Directory.cs	(revision 22362)
++++ AlphaFS/Filesystem/Directory.cs	(revision 22494)
+@@ -57,7 +57,7 @@
+       /// <param name="directorySecurity">The <see cref="DirectorySecurity"/> access control to apply to the directory.</param>
+       /// <returns>A <see cref="DirectoryInfo"/> object that represents the directory for the specified path, or <see langword="null"/> on failure.</returns>
+       /// <exception cref="NativeError.ThrowException()"/>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public static DirectoryInfo CreateDirectory(string path, DirectorySecurity directorySecurity)
+       {
+@@ -93,8 +93,9 @@
+       /// <param name="directorySecurity">The <see cref="DirectorySecurity"/> access control to apply to the directory.</param>
+       /// <returns>A <see cref="DirectoryInfo"/> object that represents the directory for the specified path, or <see langword="null"/> on failure.</returns>
+       /// <exception cref="NativeError.ThrowException()"/>
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+-      public static DirectoryInfo CreateDirectory(string templatePath, string path, ObjectSecurity directorySecurity)
++      public static DirectoryInfo CreateDirectory(string templatePath, string path, DirectorySecurity directorySecurity)
+       {
+          return CreateDirectoryInternal(null, templatePath, path, directorySecurity, null) ? new DirectoryInfo(null, path) : null;
+       }
+@@ -124,8 +125,9 @@
+       /// <param name="directorySecurity">The <see cref="DirectorySecurity"/> access control to apply to the directory.</param>
+       /// <returns>A <see cref="DirectoryInfo"/> object that represents the directory for the specified path, or <see langword="null"/> on failure.</returns>
+       /// <exception cref="NativeError.ThrowException()"/>
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+-      public static DirectoryInfo CreateDirectory(KernelTransaction transaction, string path, ObjectSecurity directorySecurity)
++      public static DirectoryInfo CreateDirectory(KernelTransaction transaction, string path, DirectorySecurity directorySecurity)
+       {
+          return CreateDirectoryInternal(transaction, null, path, directorySecurity, null) ? new DirectoryInfo(transaction, path) : null;
+       }
+@@ -161,8 +163,9 @@
+       /// <param name="directorySecurity">The <see cref="DirectorySecurity"/> access control to apply to the directory.</param>
+       /// <returns>A <see cref="DirectoryInfo"/> object that represents the directory for the specified path, or <see langword="null"/> on failure.</returns>
+       /// <exception cref="NativeError.ThrowException()"/>
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+-      public static DirectoryInfo CreateDirectory(KernelTransaction transaction, string templatePath, string path, ObjectSecurity directorySecurity)
++      public static DirectoryInfo CreateDirectory(KernelTransaction transaction, string templatePath, string path, DirectorySecurity directorySecurity)
+       {
+          return CreateDirectoryInternal(transaction, templatePath, path, directorySecurity, null) ? new DirectoryInfo(transaction, path) : null;
+       }
+@@ -180,10 +183,10 @@
+       /// <summary>Deletes an empty directory from a specified path.</summary>
+       /// <param name="path">The name of the empty directory to remove. This directory must be writable and empty.</param>
+       /// <exception cref="NativeError.ThrowException()"/>
+-      [SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "unused"), SecurityCritical]
++      [SecurityCritical]
+       public static void Delete(string path)
+       {
+-         bool unused = DeleteDirectoryInternal(null, path, false, false, Path.WildcardStarMatchAll, true);
++         DeleteDirectoryInternal(null, path, false, false, Path.WildcardStarMatchAll, true);
+       }
+ 
+       /// <summary>Deletes the specified directory and, if indicated, any subdirectories in the directory.</summary>
+@@ -190,10 +193,10 @@
+       /// <param name="path">The name of the directory to remove.</param>
+       /// <param name="recursive"><c>true</c> to remove directories, subdirectories, and files in path; otherwise, <c>false</c>.</param>
+       /// <exception cref="NativeError.ThrowException()"/>
+-      [SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "unused"), SecurityCritical]
++      [SecurityCritical]
+       public static void Delete(string path, bool recursive)
+       {
+-         bool unused = DeleteDirectoryInternal(null, path, recursive, false, Path.WildcardStarMatchAll, false);
++         DeleteDirectoryInternal(null, path, recursive, false, Path.WildcardStarMatchAll, !recursive);
+       }
+ 
+       #endregion .NET
+@@ -209,7 +212,7 @@
+       [SecurityCritical]
+       public static bool Delete(string path, bool recursive, bool ignoreReadOnly)
+       {
+-         return DeleteDirectoryInternal(null, path, recursive, ignoreReadOnly, Path.WildcardStarMatchAll, false);
++         return DeleteDirectoryInternal(null, path, recursive, ignoreReadOnly, Path.WildcardStarMatchAll, !recursive);
+       }
+ 
+       /// <summary>Deletes the specified directory and, if indicated, any subdirectories in the directory.</summary>
+@@ -222,7 +225,7 @@
+       [SecurityCritical]
+       public static bool Delete(string path, bool recursive, bool ignoreReadOnly, string searchPattern)
+       {
+-         return DeleteDirectoryInternal(null, path, recursive, ignoreReadOnly, searchPattern, false);
++         return DeleteDirectoryInternal(null, path, recursive, ignoreReadOnly, searchPattern, !recursive);
+       }
+ 
+       #region Transacted
+@@ -247,7 +250,7 @@
+       [SecurityCritical]
+       public static bool Delete(KernelTransaction transaction, string path, bool recursive)
+       {
+-         return DeleteDirectoryInternal(transaction, path, recursive, false, Path.WildcardStarMatchAll, false);
++         return DeleteDirectoryInternal(transaction, path, recursive, false, Path.WildcardStarMatchAll, !recursive);
+       }
+ 
+       /// <summary>Deletes the specified directory and, if indicated, any subdirectories in the directory.</summary>
+@@ -260,7 +263,7 @@
+       [SecurityCritical]
+       public static bool Delete(KernelTransaction transaction, string path, bool recursive, bool ignoreReadOnly)
+       {
+-         return DeleteDirectoryInternal(transaction, path, recursive, ignoreReadOnly, Path.WildcardStarMatchAll, false);
++         return DeleteDirectoryInternal(transaction, path, recursive, ignoreReadOnly, Path.WildcardStarMatchAll, !recursive);
+       }
+ 
+       /// <summary>Deletes the specified directory and, if indicated, any subdirectories in the directory.</summary>
+@@ -274,7 +277,7 @@
+       [SecurityCritical]
+       public static bool Delete(KernelTransaction transaction, string path, bool recursive, bool ignoreReadOnly, string searchPattern)
+       {
+-         return DeleteDirectoryInternal(transaction, path, recursive, ignoreReadOnly, searchPattern, false);
++         return DeleteDirectoryInternal(transaction, path, recursive, ignoreReadOnly, searchPattern, !recursive);
+       }
+ 
+       #endregion // Transacted
+@@ -642,7 +645,7 @@
+       [SecurityCritical]
+       public static bool Exists(string path)
+       {
+-         return FileSystemInfo.ExistsInternal(true, null, path);
++         return !string.IsNullOrEmpty(path) && FileSystemInfo.ExistsInternal(true, null, path);
+       }
+ 
+       #endregion // .NET
+@@ -962,7 +965,7 @@
+       [SecurityCritical]
+       public static string GetDirectoryRoot(string path)
+       {
+-         return new PathInfo(new PathInfo(path, false).GetFullPath(), false).Root;
++         return Path.GetPathRoot(Path.GetFullPathInternal(null, path));
+       }
+ 
+       #endregion // .NET
+@@ -1427,11 +1430,11 @@
+ 
+       /// <summary>Retrieves the parent directory of the specified path, including both absolute and relative paths.</summary>
+       /// <param name="path">The path for which to retrieve the parent directory.</param>
+-      /// <returns>The parent directory of type <see cref="DirectoryInfo"/> or null if path is the root directory, including the root of a UNC server or share name.</returns>
++      /// <returns>The parent directory, or null if <paramref name="path"/> is the root directory, including the root of a UNC server or share name.</returns>
+       [SecurityCritical]
+       public static DirectoryInfo GetParent(string path)
+       {
+-         return GetParent(null, path);
++         return GetParentInternal(null, path);
+       }
+ 
+       #endregion // .NET
+@@ -1443,16 +1446,11 @@
+       /// <summary>Retrieves the parent directory of the specified path, including both absolute and relative paths.</summary>
+       /// <param name="transaction">The transaction.</param>
+       /// <param name="path">The path for which to retrieve the parent directory.</param>
+-      /// <returns>The parent directory of type <see cref="DirectoryInfo"/> or null if path is the root directory, including the root of a UNC server or share name.</returns>
++      /// <returns>The parent directory, or null if <paramref name="path"/> is the root directory, including the root of a UNC server or share name.</returns>
+       [SecurityCritical]
+       public static DirectoryInfo GetParent(KernelTransaction transaction, string path)
+       {
+-         if (path != null)
+-            path = NativeMethods.TrimTrailingChars(path, new[] { ' ' });  // .NET: Trailing spaces are removed from the end of the path parameter before getting the directory.
+-
+-         PathInfo p = new PathInfo(path, false).Parent;
+-         //return string.IsNullOrEmpty(p.Path) ? null : new DirectoryInfo(transaction, p.Path);
+-         return new DirectoryInfo(transaction, !string.IsNullOrEmpty(p.Path) ? p.Path : path);
++         return GetParentInternal(transaction, path);
+       }
+ 
+       #endregion // Transacted
+@@ -1565,7 +1563,7 @@
+          try
+          {
+             // MaxComponentLength = 255
+-            System.IO.Directory.SetCurrentDirectory(path.Length > 255 ? Path.GetShort83Path(regularPath) : regularPath);
++            System.IO.Directory.SetCurrentDirectory(path.Length > 255 ? Path.GetLongShort83PathInternal(regularPath, true) : regularPath);
+          }
+          catch
+          {
+@@ -2524,7 +2522,7 @@
+       /// <summary>Returns an enumerable collection of <see cref="FileSystemInfo"/> entries in a specified path.</summary>
+       /// <param name="path">The directory to search.</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> entries in the directory specified by path.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public static IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(string path)
+       {
+@@ -2535,7 +2533,7 @@
+       /// <param name="path">The directory to search.</param>
+       /// <param name="searchPattern">A search string, the path which has wildcard characters, for example, an asterisk (<see cref="Path.WildcardStarMatchAll"/>) or a question mark (<see cref="Path.WildcardQuestion"/>).</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> entries in the directory specified by path and that match the specified search pattern.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public static IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(string path, string searchPattern)
+       {
+@@ -2549,7 +2547,7 @@
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> entries in the directory specified by path
+       /// and that match the specified search pattern and option.
+       /// </returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public static IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(string path, string searchPattern, SearchOption searchOption)
+       {
+@@ -2564,7 +2562,7 @@
+       /// <param name="searchOption">One of the <see cref="SearchOption"/> enumeration values that specifies whether the search operation should include only the current directory or should include all subdirectories.</param>
+       /// <param name="continueOnAccessError">If set to <c>true</c> skip on access errors resulted from ACLs protected directories or non-accessible reparse points, otherwise an <see cref="System.UnauthorizedAccessException"/> is thrown.</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> information objects that matches searchPattern and searchOption.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public static IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(string path, string searchPattern, SearchOption searchOption, bool continueOnAccessError)
+       {
+@@ -2577,7 +2575,7 @@
+       /// <param name="transaction">The transaction.</param>
+       /// <param name="path">The directory to search.</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> entries in the directory specified by path.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public static IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(KernelTransaction transaction, string path)
+       {
+@@ -2589,7 +2587,7 @@
+       /// <param name="path">The directory to search.</param>
+       /// <param name="searchPattern">A search string, the path which has wildcard characters, for example, an asterisk (<see cref="Path.WildcardStarMatchAll"/>) or a question mark (<see cref="Path.WildcardQuestion"/>).</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> entries in the directory specified by path and that match the specified search pattern.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public static IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(KernelTransaction transaction, string path, string searchPattern)
+       {
+@@ -2604,7 +2602,7 @@
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> entries in the directory specified by path
+       /// and that match the specified search pattern and option.
+       /// </returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public static IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(KernelTransaction transaction, string path, string searchPattern, SearchOption searchOption)
+       {
+@@ -2618,7 +2616,7 @@
+       /// <param name="searchOption">One of the <see cref="SearchOption"/> enumeration values that specifies whether the search operation should include only the current directory or should include all subdirectories.</param>
+       /// <param name="continueOnAccessError">If set to <c>true</c> skip on access errors resulted from ACLs protected directories or non-accessible reparse points, otherwise an <see cref="System.UnauthorizedAccessException"/> is thrown.</param>
+       /// <returns>An enumerable collection of <see cref="FileSystemInfo"/> information objects that matches searchPattern and searchOption.</returns>
+-      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos", Justification = "Microsoft chose this name, so we use it too.")]
++      [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Infos")]
+       [SecurityCritical]
+       public static IEnumerable<FileSystemInfo> EnumerateFileSystemInfos(KernelTransaction transaction, string path, string searchPattern, SearchOption searchOption, bool continueOnAccessError)
+       {
+@@ -2832,7 +2830,7 @@
+          // In the ANSI version of this function, the name is limited to 248 characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          if (!NativeMethods.EncryptionDisable(pathLp, true))
+             NativeError.ThrowException(pathLp);
+@@ -2860,7 +2858,7 @@
+          // In the ANSI version of this function, the name is limited to 248 characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+          if (!NativeMethods.EncryptionDisable(pathLp, false))
+             NativeError.ThrowException(pathLp);
+@@ -3370,7 +3368,7 @@
+       /// <param name="path">A directory to add or remove access control list (ACL) entries from.</param>
+       /// <param name="directorySecurity">A <see cref="DirectorySecurity "/> object that describes an ACL entry to apply to the directory described by the path parameter.</param>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public static bool SetAccessControl(string path, DirectorySecurity directorySecurity)
+       {
+@@ -3386,7 +3384,7 @@
+       /// determine what parts of the specified <see cref="DirectorySecurity"/> instance has been modified. Instead, the
+       /// parameter <paramref name="includeSections"/> is used to specify what entries from <paramref name="directorySecurity"/> to apply to <paramref name="path"/>.</remarks>
+       /// <returns><c>true</c> on success, <c>false</c> otherwise.</returns>
+-      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = ".NET parameter type.")]
++      [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+       [SecurityCritical]
+       public static bool SetAccessControl(string path, DirectorySecurity directorySecurity, AccessControlSections includeSections)
+       {
+@@ -3557,8 +3555,8 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN confirms LongPath usage.
+-         string sourcePathLp = Path.PrefixLongPath(sourcePath);
+-         string destinationPathLp = Path.PrefixLongPath(destinationPath);
++         string sourcePathLp = Path.GetLongPath(sourcePath);
++         string destinationPathLp = Path.GetLongPath(destinationPath);
+ 
+          bool isCopy = copyOptions != null && moveOptions == null;
+          bool isMove = moveOptions != null && copyOptions == null;
+@@ -3623,13 +3621,10 @@
+       /// the other attributes of the specified template directory.
+       /// </summary>
+       /// <param name="transaction">The transaction.</param>
+-      /// <param name="templatePath">The path of the directory to use as a template when creating the new directory. 
+-      /// May be <see langword="null"/> to indicate that no template should be used.</param>
++      /// <param name="templatePath">The path of the directory to use as a template when creating the new directory. May be <see langword="null"/> to indicate that no template should be used.</param>
+       /// <param name="path">The directory path to create.</param>
+       /// <param name="directorySecurity">The <see cref="DirectorySecurity"/> access control to apply to the directory, may be <see langword="null"/>.</param>
+-      /// <param name="securityAttributes">
+-      /// The security descriptor to apply to the newly created directory.
+-      /// May be <see langword="null"/> in which case a default security descriptor will be applied.</param>
++      /// <param name="securityAttributes">The security descriptor to apply to the newly created directory. May be <see langword="null"/> in which case a default security descriptor will be applied.</param>
+       /// <returns>Returns <c>true</c> on success, <c>false</c> on failure.</returns>
+       /// <exception cref="NativeError.ThrowException()"/>
+       [SecurityCritical]
+@@ -3638,6 +3633,43 @@
+          if (string.IsNullOrEmpty(path))
+             throw new ArgumentNullException("path");
+ 
++         // .NET: Trailing spaces are removed from the end of the path parameter before creating the directory.
++         path = Path.GetRegularPath(NativeMethods.TrimTrailingChars(path, new[] { ' ' }));
++
++         if (!string.IsNullOrEmpty(templatePath))
++            templatePath = Path.GetRegularPath(NativeMethods.TrimTrailingChars(templatePath, new[] { ' ' }));
++
++         
++         Path.CheckInvalidPathChars(path, false);
++         
++         int length = path.Length;
++         if (length >= 2 && Path.IsDVsc(path[length - 1], false))
++            --length;
++
++         int rootLength = Path.GetRootLength(path);
++         if (length == 2 && Path.IsDVsc(path[1], false))
++            throw new ArgumentException(Resources.CannotCreateDirectory, path);
++
++         
++         // Check if folders are missing.
++         Stack<string> list = new Stack<string>();
++
++         if (length > rootLength)
++         {
++            for (int index = length - 1; index >= rootLength; --index)
++            {
++               string path1 = path.Substring(0, index + 1);
++
++               if (!FileSystemInfo.ExistsInternal(true, transaction, path1))
++                  list.Push(path1);
++
++               while (index > rootLength && !Path.IsDVsc(path[index], false))
++                  --index;
++            }
++         }
++
++
++         // Folder security.
+          Security.NativeMethods.SecurityAttributes securityAttributes2 = securityAttributes;
+          if (directorySecurity != null)
+          {
+@@ -3646,60 +3678,34 @@
+             Security.NativeMethods.SecurityAttributes.Initialize(out securityDescriptorBuffer, directorySecurity);
+          }
+ 
+-         // In the ANSI version of this function, the name is limited to 248 characters.
+-         // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+-         // 2013-01-13: MSDN confirms LongPath usage.
+-         string templatePathLp = Path.PrefixLongPath(templatePath);
+-         string newPathLp = Path.PrefixLongPath(NativeMethods.TrimTrailingChars(path, new[] { ' ' }));  // .NET: Trailing spaces are removed from the end of the path parameter before creating the directory.
+-         
+ 
+-         if (!string.IsNullOrEmpty(templatePathLp))
+-            templatePathLp = NativeMethods.TrimTrailingChars(templatePathLp, new[] { ' ' }); // .NET: Trailing spaces are removed from the end of the path parameter before creating the directory.
++         // Create the folder paths.
++         templatePath = Path.GetLongPath(templatePath);
+ 
+-         if (transaction == null
+-                ? (templatePath == null
+-                      ? NativeMethods.CreateDirectory(newPathLp, securityAttributes2)
+-                      : NativeMethods.CreateDirectoryEx(templatePathLp, newPathLp, securityAttributes2))
+-                : NativeMethods.CreateDirectoryTransacted(templatePathLp, newPathLp, securityAttributes2, transaction.SafeHandle))
+-            return true;
++         while (list.Count > 0)
++         {
++            string folder = Path.GetLongPath(list.Pop());
+ 
+-         bool raiseException = false;
++            // In the ANSI version of this function, the name is limited to 248 characters.
++            // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
++            // 2013-01-13: MSDN confirms LongPath usage.
+ 
+-         int lastError = Marshal.GetLastWin32Error();
+-         switch ((uint)lastError)
+-         {
+-            case Win32Errors.ERROR_PATH_NOT_FOUND:
+-               PathInfo pathInfo = new PathInfo(newPathLp, false);
+-               string dirName = pathInfo.DirectoryName;
++            bool createOk = (transaction == null
++               ? (templatePath == null
++                  ? NativeMethods.CreateDirectory(folder, securityAttributes2)
++                  : NativeMethods.CreateDirectoryEx(templatePath, folder, securityAttributes2))
++               : NativeMethods.CreateDirectoryTransacted(templatePath, folder, securityAttributes2, transaction.SafeHandle));
+ 
+-               // Check that the root exists and that there's no file with the same name.
+-               if (FileSystemInfo.ExistsInternal(true, transaction, pathInfo.Root) && !FileSystemInfo.ExistsInternal(true, transaction, dirName))
+-               {
+-                  CreateDirectoryInternal(transaction, templatePathLp, dirName, directorySecurity, securityAttributes2);
+-                  CreateDirectoryInternal(transaction, templatePathLp, newPathLp, directorySecurity, securityAttributes2);
+-               }
+-               else
+-                  raiseException = true;
+-               break;
++            int lastError = Marshal.GetLastWin32Error();
+ 
+-            case Win32Errors.ERROR_ALREADY_EXISTS:
+-               // As stated in the MSDN article for Directory.CreateDirectory() method,
+-               // it should throw exception only for existing files with the same name as requested directory.
+-               // http://msdn.microsoft.com/en-us/library/54a0at6s.aspx
++            // Throw exception if a file exists with the same name as the requested directory.
++            if (lastError == Win32Errors.ERROR_ALREADY_EXISTS)
++               createOk = !FileSystemInfo.ExistsInternal(false, transaction, folder);
+ 
+-               // Check file.
+-               raiseException = FileSystemInfo.ExistsInternal(false, transaction, newPathLp);
+-               break;
+-
+-            default:
+-               // Throw exceptions for everything else.
+-               raiseException = true;
+-               break;
++            if (!createOk)
++               NativeError.ThrowException(lastError, folder);
+          }
+ 
+-         if (raiseException)
+-            NativeError.ThrowException(lastError, newPathLp);
+-
+          return true;
+       }
+ 
+@@ -3726,7 +3732,7 @@
+             // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+             // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+             // 2013-01-13: MSDN confirms LongPath usage.
+-            directoryPath = Path.PrefixLongPath(directoryPath);
++            directoryPath = Path.GetLongPath(directoryPath);
+ 
+             // To open a directory using CreateFile, specify the FILE_FLAG_BACKUP_SEMANTICS flag as part of dwFlagsAndAttributes.
+             directoryHandle = FileSystemInfo.CreateFileInternal(false, transaction, directoryPath, EFileAttributes.BackupSemantics, null, FileMode.Open, FileSystemRights.ListDirectory, shareMode);
+@@ -3776,6 +3782,20 @@
+ 
+       #endregion // GetFileIdBothDirectoryInfoInternal
+ 
++      /// <summary>Unified method GetParent() to retrieve the parent directory of the specified path, including both absolute and relative paths.</summary>
++      /// <param name="transaction">The transaction.</param>
++      /// <param name="path">The path for which to retrieve the parent directory.</param>
++      /// <returns>The parent directory, or null if <paramref name="path"/> is the root directory, including the root of a UNC server or share name.</returns>
++      [SecurityCritical]
++      internal static DirectoryInfo GetParentInternal(KernelTransaction transaction, string path)
++      {
++         if (string.IsNullOrEmpty(path))
++            throw new ArgumentNullException("path");
++
++         string directoryName = Path.GetDirectoryName(Path.GetFullPathInternal(transaction, path));
++         return directoryName == null ? null : new DirectoryInfo(transaction, directoryName);
++      }
++
+       #region DeleteDirectoryInternal
+ 
+       /// <summary>Unified method DeleteDirectoryInternal() to delete a Non-/Transacted directory.</summary>
+@@ -3798,14 +3818,13 @@
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN confirms LongPath usage.
+-         string pathLp = Path.PrefixLongPath(NativeMethods.TrimTrailingChars(path, new[] { ' ' }));  // .NET: Trailing spaces are removed from the end of the path parameter before deleting the directory.
++         string pathLp = Path.GetLongPath(NativeMethods.TrimTrailingChars(path, new[] { ' ' }));  // .NET: Trailing spaces are removed from the end of the path parameter before deleting the directory.
+ 
+ 
+          // Check upfront.
+          if (requireEmpty && !NativeMethods.PathIsDirectoryEmpty(pathLp))
+-            return false;
++            throw new IOException(Resources.DirectoryNotEmpty);
+ 
+-
+          if (recursive)
+          {
+             foreach (FileSystemInfo fsei in FileSystemInfo.EnumerateFileSystemObjectsInternal(transaction, pathLp, searchPattern, SearchOption.AllDirectories, true, null, false, false))
+@@ -3862,8 +3881,9 @@
+                   break;
+ 
+                case Win32Errors.ERROR_DIR_NOT_EMPTY:
+-                  if (!requireEmpty)
++                  if (!requireEmpty && recursive)
+                      return DeleteDirectoryInternal(transaction, pathLp, true, true, searchPattern, false);
++
+                   raiseException = true;
+                   break;
+ 
+Index: AlphaFS/Filesystem/Volume.cs
+===================================================================
+--- AlphaFS/Filesystem/Volume.cs	(revision 22362)
++++ AlphaFS/Filesystem/Volume.cs	(revision 22494)
+@@ -719,7 +719,7 @@
+             // In the ANSI version of this function, the name is limited to 248 characters.
+             // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+             // 2013-07-18: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-            string pathLp = Path.PrefixLongPath(path);
++            string pathLp = Path.GetLongPath(path);
+ 
+             bool getOk = NativeMethods.GetVolumePathName(pathLp, volumeRootPath, (uint)volumeRootPath.Capacity);
+             int lastError = Marshal.GetLastWin32Error();
+@@ -906,7 +906,7 @@
+          // In the ANSI version of this function, the name is limited to 248 characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-07-18: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         volumeMountPoint = Path.PrefixLongPath(volumeMountPoint);
++         volumeMountPoint = Path.GetLongPath(volumeMountPoint);
+ 
+          StringBuilder volumeGuid = new StringBuilder(100);
+          StringBuilder uniqueName = new StringBuilder(100);
+@@ -1033,7 +1033,7 @@
+          // In the ANSI version of this function, the name is limited to 248 characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-07-18: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         volumeMountPoint = Path.PrefixLongPath(volumeMountPoint);
++         volumeMountPoint = Path.GetLongPath(volumeMountPoint);
+ 
+          // The string must end with a trailing backslash ('\').
+          volumeMountPoint = Path.AddDirectorySeparator(volumeMountPoint, false);
+@@ -1088,7 +1088,7 @@
+             // In the ANSI version of this function, the name is limited to 248 characters.
+             // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+             // 2013-07-18: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-            volumePath = Path.PrefixLongPath(volumePath);
++            volumePath = Path.GetLongPath(volumePath);
+          }
+          else
+          {
+Index: AlphaFS/Filesystem/PathInfo.cs
+===================================================================
+--- AlphaFS/Filesystem/PathInfo.cs	(revision 22362)
++++ AlphaFS/Filesystem/PathInfo.cs	(revision 22494)
+@@ -25,8 +25,6 @@
+ using System.Diagnostics.CodeAnalysis;
+ using System.Text;
+ 
+-// Also see PathInfoParser.cs and PathInfoComponentList.cs
+-
+ namespace Alphaleonis.Win32.Filesystem
+ {
+    /// <summary>A representation of a path, providing convenient access to the individual components of the path.</summary>
+Index: AlphaFS/Filesystem/NativeMethods.cs
+===================================================================
+--- AlphaFS/Filesystem/NativeMethods.cs	(revision 22362)
++++ AlphaFS/Filesystem/NativeMethods.cs	(revision 22494)
+@@ -1345,17 +1345,17 @@
+ 
+       #endregion // SetFileTime
+ 
+-      #region SHGetFileInfo
++      #region ShGetFileInfo
+ 
+       /// <summary>Retrieves information about an object in the file system, such as a file, folder, directory, or drive root.</summary>
+       /// <remarks>You should call this function from a background thread. Failure to do so could cause the UI to stop responding.</remarks>
+-      /// <remarks>Minimum supported client: Windows XP</remarks>
+-      /// <remarks>Minimum supported server: Windows 2000 Server</remarks>
++      /// <remarks>Minimum supported client: Windows XP [desktop apps only]</remarks>
++      /// <remarks>Minimum supported server: Windows 2000 Server [desktop apps only]</remarks>
+       [SuppressMessage("Microsoft.Security", "CA5122:PInvokesShouldNotBeSafeCriticalFxCopRule")]
+       [DllImport("shell32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "SHGetFileInfoW")]
+-      internal static extern UIntPtr SHGetFileInfo([MarshalAs(UnmanagedType.LPWStr)] string pszPath, FileAttributes dwFileAttributes, out Shell32.FileInfo psfi, [MarshalAs(UnmanagedType.U4)] uint cbFileInfo, Shell32.FileInfoAttributes uFileIconSize);
++      internal static extern UIntPtr ShGetFileInfo([MarshalAs(UnmanagedType.LPWStr)] string pszPath, FileAttributes dwFileAttributes, out Shell32.FileInfo psfi, [MarshalAs(UnmanagedType.U4)] uint cbFileInfo, Shell32.FileInfoAttributes uFileIconSize);
+ 
+-      #endregion // SHGetFileInfo
++      #endregion // ShGetFileInfo
+ 
+       #region UnlockFile
+ 
+Index: AlphaFS/app.config
+===================================================================
+--- AlphaFS/app.config	(revision 22362)
++++ AlphaFS/app.config	(revision 22494)
+@@ -1,3 +1,3 @@
+ <?xml version="1.0"?>
+ <configuration>
+-	<startup><supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.0"/></startup></configuration>
++	<startup><supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.0,Profile=Client"/></startup></configuration>
+Index: AlphaFS/Security/NativeMethods.cs
+===================================================================
+--- AlphaFS/Security/NativeMethods.cs	(revision 22362)
++++ AlphaFS/Security/NativeMethods.cs	(revision 22494)
+@@ -46,12 +46,12 @@
+          if (string.IsNullOrEmpty(path))
+             throw new ArgumentNullException("path");
+ 
+-         // 2012-10-19: Yomodo; GetFileSecurity() seems to perform better than GetNamedSecurityInfo() and doesn't require Administrator rights.
++         // 2012-10-19: GetFileSecurity() seems to perform better than GetNamedSecurityInfo() and doesn't require Administrator rights.
+ 
+          // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+          // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+          // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-         string pathLp = Path.PrefixLongPath(path);
++         string pathLp = Path.GetLongPath(path);
+ 
+ 
+          SecurityInformation securityInfo = 0;
+@@ -236,7 +236,7 @@
+                   // In the ANSI version of this function, the name is limited to MAX_PATH characters.
+                   // To extend this limit to 32,767 wide characters, call the Unicode version of the function and prepend "\\?\" to the path.
+                   // 2013-01-13: MSDN doesn't confirm LongPath usage but a Unicode version of this function exists.
+-                  string pathLp = Path.PrefixLongPath(path);
++                  string pathLp = Path.GetLongPath(path);
+ 
+                   lastError = SetNamedSecurityInfo(pathLp, ObjectType.FileObject, securityInfo, pOwner, pGroup, pDacl, pSacl);
+                   if (lastError != Win32Errors.ERROR_SUCCESS)
+Index: AlphaFS/Resources.resx
+===================================================================
+--- AlphaFS/Resources.resx	(revision 22362)
++++ AlphaFS/Resources.resx	(revision 22494)
+@@ -133,7 +133,7 @@
+     <value>Invalid directory name</value>
+   </data>
+   <data name="DirectoryNotEmpty" xml:space="preserve">
+-    <value>Directory not empty</value>
++    <value>The directory is not empty</value>
+   </data>
+   <data name="TransactionAlreadyCommitted" xml:space="preserve">
+     <value>Transaction already committed.</value>
+@@ -223,4 +223,7 @@
+   <data name="SameSourceDestination" xml:space="preserve">
+     <value>Source- and destinationPath cannot be the same.</value>
+   </data>
++  <data name="CannotCreateDirectory" xml:space="preserve">
++    <value>Cannot create directory</value>
++  </data>
+ </root>
+\ No newline at end of file
+Index: AlphaFS/AlphaFS.csproj
+===================================================================
+--- AlphaFS/AlphaFS.csproj	(revision 22362)
++++ AlphaFS/AlphaFS.csproj	(revision 22494)
+@@ -27,7 +27,7 @@
+     </FileUpgradeFlags>
+     <OldToolsVersion>3.5</OldToolsVersion>
+     <UpgradeBackupLocation />
+-    <TargetFrameworkProfile />
++    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+   </PropertyGroup>
+   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+     <DebugSymbols>true</DebugSymbols>
+@@ -125,6 +125,7 @@
+     <Compile Include="Filesystem\FileSystemInfo.cs" />
+     <Compile Include="Filesystem\Exceptions\IllegalPathException.cs" />
+     <Compile Include="Filesystem\Enumerations\DeviceIoControlCode.cs" />
++    <Compile Include="Filesystem\SafeSetupDiClassDevsHandle.cs" />
+     <Compile Include="Filesystem\Structures\ByHandleFileInfo.cs" />
+     <Compile Include="Filesystem\Structures\ChangeErrorMode.cs" />
+     <Compile Include="Filesystem\Structures\FileIdBothDirInfo.cs" />
+Index: AlphaFS/Resources.Designer.cs
+===================================================================
+--- AlphaFS/Resources.Designer.cs	(revision 22362)
++++ AlphaFS/Resources.Designer.cs	(revision 22494)
+@@ -1,10 +1,10 @@
+ ﻿//------------------------------------------------------------------------------
+ // <auto-generated>
+-//     Ce code a été généré par un outil.
+-//     Version du runtime :4.0.30319.18408
++//     This code was generated by a tool.
++//     Runtime Version:4.0.30319.18408
+ //
+-//     Les modifications apportées à ce fichier peuvent provoquer un comportement incorrect et seront perdues si
+-//     le code est régénéré.
++//     Changes to this file may cause incorrect behavior and will be lost if
++//     the code is regenerated.
+ // </auto-generated>
+ //------------------------------------------------------------------------------
+ 
+@@ -13,12 +13,12 @@
+     
+     
+     /// <summary>
+-    ///   Une classe de ressource fortement typée destinée, entre autres, à la consultation des chaînes localisées.
++    ///   A strongly-typed resource class, for looking up localized strings, etc.
+     /// </summary>
+-    // Cette classe a été générée automatiquement par la classe StronglyTypedResourceBuilder
+-    // à l'aide d'un outil, tel que ResGen ou Visual Studio.
+-    // Pour ajouter ou supprimer un membre, modifiez votre fichier .ResX, puis réexécutez ResGen
+-    // avec l'option /str ou régénérez votre projet VS.
++    // This class was auto-generated by the StronglyTypedResourceBuilder
++    // class via a tool like ResGen or Visual Studio.
++    // To add or remove a member, edit your .ResX file then rerun ResGen
++    // with the /str option, or rebuild your VS project.
+     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+@@ -33,7 +33,7 @@
+         }
+         
+         /// <summary>
+-        ///   Retourne l'instance ResourceManager mise en cache utilisée par cette classe.
++        ///   Returns the cached ResourceManager instance used by this class.
+         /// </summary>
+         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+         internal static global::System.Resources.ResourceManager ResourceManager {
+@@ -47,8 +47,8 @@
+         }
+         
+         /// <summary>
+-        ///   Remplace la propriété CurrentUICulture du thread actuel pour toutes
+-        ///   les recherches de ressources à l'aide de cette classe de ressource fortement typée.
++        ///   Overrides the current thread's CurrentUICulture property for all
++        ///   resource lookups using this strongly typed resource class.
+         /// </summary>
+         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+         internal static global::System.Globalization.CultureInfo Culture {
+@@ -61,7 +61,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à AlphaFS Internal Error.
++        ///   Looks up a localized string similar to AlphaFS Internal Error.
+         /// </summary>
+         internal static string AlphaFSInternalError {
+             get {
+@@ -70,7 +70,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Incorrectly implemented function attempting to generate exception from successful operation.
++        ///   Looks up a localized string similar to Incorrectly implemented function attempting to generate exception from successful operation.
+         ///.
+         /// </summary>
+         internal static string AttemptingToGenerateExceptionFromSuccessfulOperation {
+@@ -80,7 +80,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Backup FileStream Lock Length must not be negative..
++        ///   Looks up a localized string similar to Backup FileStream Lock Length must not be negative..
+         /// </summary>
+         internal static string BackupFileStream_Unlock_Backup_FileStream_Lock_Length_must_not_be_negative_ {
+             get {
+@@ -89,7 +89,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Backup FileStream Unlock Position must not be negative..
++        ///   Looks up a localized string similar to Backup FileStream Unlock Position must not be negative..
+         /// </summary>
+         internal static string BackupFileStream_Unlock_Backup_FileStream_Unlock_Position_must_not_be_negative_ {
+             get {
+@@ -98,7 +98,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Buffer is not large enough for the requested operation..
++        ///   Looks up a localized string similar to Buffer is not large enough for the requested operation..
+         /// </summary>
+         internal static string BufferIsNotLargeEnoughForTheRequestedOperation {
+             get {
+@@ -107,8 +107,17 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Count must not be negative.
++        ///   Looks up a localized string similar to Cannot create directory.
+         /// </summary>
++        internal static string CannotCreateDirectory {
++            get {
++                return ResourceManager.GetString("CannotCreateDirectory", resourceCulture);
++            }
++        }
++        
++        /// <summary>
++        ///   Looks up a localized string similar to Count must not be negative.
++        /// </summary>
+         internal static string CountMustNotBeNegative {
+             get {
+                 return ResourceManager.GetString("CountMustNotBeNegative", resourceCulture);
+@@ -116,7 +125,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Directory exists.
++        ///   Looks up a localized string similar to Directory exists.
+         /// </summary>
+         internal static string DirectoryExists {
+             get {
+@@ -125,7 +134,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Directory not empty.
++        ///   Looks up a localized string similar to The directory is not empty.
+         /// </summary>
+         internal static string DirectoryNotEmpty {
+             get {
+@@ -134,7 +143,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Directory not found.
++        ///   Looks up a localized string similar to Directory not found.
+         /// </summary>
+         internal static string DirectoryNotFound {
+             get {
+@@ -143,7 +152,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Error code was.
++        ///   Looks up a localized string similar to Error code was.
+         /// </summary>
+         internal static string ErrorCodeWas0 {
+             get {
+@@ -152,7 +161,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à File exists.
++        ///   Looks up a localized string similar to File exists.
+         /// </summary>
+         internal static string FileExists {
+             get {
+@@ -161,7 +170,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Handle is closed..
++        ///   Looks up a localized string similar to Handle is closed..
+         /// </summary>
+         internal static string HandleClosed {
+             get {
+@@ -170,7 +179,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Invalid handle..
++        ///   Looks up a localized string similar to Invalid handle..
+         /// </summary>
+         internal static string HandleInvalid {
+             get {
+@@ -179,7 +188,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Creating hard-links on non-NTFS partitions is not supported.
++        ///   Looks up a localized string similar to Creating hard-links on non-NTFS partitions is not supported.
+         /// </summary>
+         internal static string HardLinksOnNonNTFSPartitionsIsNotSupported {
+             get {
+@@ -188,7 +197,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Illegal path.
++        ///   Looks up a localized string similar to Illegal path.
+         /// </summary>
+         internal static string IllegalPath {
+             get {
+@@ -197,7 +206,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Invalid directory name.
++        ///   Looks up a localized string similar to Invalid directory name.
+         /// </summary>
+         internal static string InvalidDirectoryName {
+             get {
+@@ -206,7 +215,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Invalid security descriptor returned from system..
++        ///   Looks up a localized string similar to Invalid security descriptor returned from system..
+         /// </summary>
+         internal static string InvalidSecurityDescriptorReturnedFromSystem {
+             get {
+@@ -215,7 +224,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Invalid transaction object..
++        ///   Looks up a localized string similar to Invalid transaction object..
+         /// </summary>
+         internal static string InvalidTransaction {
+             get {
+@@ -224,7 +233,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Invalid transaction request..
++        ///   Looks up a localized string similar to Invalid transaction request..
+         /// </summary>
+         internal static string InvalidTransactionRequest {
+             get {
+@@ -233,7 +242,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à The file or directory is not a reparse point..
++        ///   Looks up a localized string similar to The file or directory is not a reparse point..
+         /// </summary>
+         internal static string NotAReparsePoint {
+             get {
+@@ -242,7 +251,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Offset must not be negative.
++        ///   Looks up a localized string similar to Offset must not be negative.
+         /// </summary>
+         internal static string OffsetMustNotBeNegative {
+             get {
+@@ -251,7 +260,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Path already exists..
++        ///   Looks up a localized string similar to Path already exists..
+         /// </summary>
+         internal static string PathAlreadyExists {
+             get {
+@@ -260,7 +269,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à name cannot be empty.
++        ///   Looks up a localized string similar to name cannot be empty.
+         /// </summary>
+         internal static string Privilege_Privilege_name_cannot_be_empty {
+             get {
+@@ -269,7 +278,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Destination offset must not be negative.
++        ///   Looks up a localized string similar to Destination offset must not be negative.
+         /// </summary>
+         internal static string SafeGlobalMemoryBufferHandle_CopyTo_Destination_offset_must_not_be_negative {
+             get {
+@@ -278,7 +287,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Length must not be negative..
++        ///   Looks up a localized string similar to Length must not be negative..
+         /// </summary>
+         internal static string SafeGlobalMemoryBufferHandle_CopyTo_Length_must_not_be_negative_ {
+             get {
+@@ -287,7 +296,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Source offset and length outside the bounds of the array.
++        ///   Looks up a localized string similar to Source offset and length outside the bounds of the array.
+         /// </summary>
+         internal static string SafeGlobalMemoryBufferHandle_CopyTo_Source_offset_and_length_outside_the_bounds_of_the_array {
+             get {
+@@ -297,7 +306,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Source- and destinationPath cannot be the same..
++        ///   Looks up a localized string similar to Source- and destinationPath cannot be the same..
+         /// </summary>
+         internal static string SameSourceDestination {
+             get {
+@@ -306,7 +315,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Invalid stream..
++        ///   Looks up a localized string similar to Invalid stream..
+         /// </summary>
+         internal static string StreamInvalid {
+             get {
+@@ -315,7 +324,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à This stream does not support seeking..
++        ///   Looks up a localized string similar to This stream does not support seeking..
+         /// </summary>
+         internal static string ThisStreamDoesNotSupportSeeking {
+             get {
+@@ -324,7 +333,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Transactional conflict..
++        ///   Looks up a localized string similar to Transactional conflict..
+         /// </summary>
+         internal static string TransactionalConflict {
+             get {
+@@ -333,7 +342,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Transaction already aborted..
++        ///   Looks up a localized string similar to Transaction already aborted..
+         /// </summary>
+         internal static string TransactionAlreadyAborted {
+             get {
+@@ -342,7 +351,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Transaction already committed..
++        ///   Looks up a localized string similar to Transaction already committed..
+         /// </summary>
+         internal static string TransactionAlreadyCommitted {
+             get {
+@@ -351,7 +360,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Transaction not active..
++        ///   Looks up a localized string similar to Transaction not active..
+         /// </summary>
+         internal static string TransactionNotActive {
+             get {
+@@ -360,7 +369,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Transaction not requested..
++        ///   Looks up a localized string similar to Transaction not requested..
+         /// </summary>
+         internal static string TransactionNotRequested {
+             get {
+@@ -369,7 +378,7 @@
+         }
+         
+         /// <summary>
+-        ///   Recherche une chaîne localisée semblable à Network share path should match the format: \\server\share.
++        ///   Looks up a localized string similar to Network share path should match the format: \\server\share.
+         /// </summary>
+         internal static string UNCPathShouldMatchTheFormatServerShare {
+             get {
+Index: AlphaFS
+===================================================================
+--- AlphaFS	(revision 22362)
++++ AlphaFS	(revision 22494)
+
+Property changes on: AlphaFS
+___________________________________________________________________
+Added: svn:global-ignores
+## -0,0 +1 ##
++_Compiled DLL
