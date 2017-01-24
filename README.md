@@ -14,7 +14,7 @@ Open source components used in MPManager software.
 - log4net (version 1.2)
 - MahApps.Metro (version 0.11)
 - Ookii.Dialogs (version 1.0.0.0 - including patches)
-- OpenSSL.NET (version 0.6.0 - including patches)
+- OpenSSL.NET (version 0.5.0 - including patches)
 - OpenSSL (version 1.0.0d)
 - SQLite (version 1.0.90)
 - tar-cs (version 1.0)
